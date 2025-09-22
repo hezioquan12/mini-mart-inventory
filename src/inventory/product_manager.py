@@ -226,3 +226,5 @@ class ProductManager:
     def reload(self):
         """Tải lại products từ file (useful cho testing or GUI)."""
         self.products = self._load_products()
+
+
