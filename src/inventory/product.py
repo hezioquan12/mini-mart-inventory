@@ -5,6 +5,7 @@ class Product:
                  cost_price: float, sell_price: float,
                  stock_quantity: int, min_threshold: int, unit: str,
                  created_date: str = None, last_updated: str = None):
+        # Thuộc tính
         self.product_id = product_id
         self.name = name
         self.category = category
@@ -16,7 +17,9 @@ class Product:
         self.created_date = created_date or datetime.now().strftime("%d/%m/%Y")
         self.last_updated = last_updated or datetime.now().strftime("%d/%m/%Y %H:%M")
 
+    # ---- Methods ----
     def update_stock(self, quantity: int, transaction_type: str):
+        """Cập nhật số lượng tồn kho"""
         if transaction_type == "nhập":
             self.stock_quantity += quantity
         elif transaction_type == "xuất":
@@ -28,6 +31,7 @@ class Product:
         self.last_updated = datetime.now().strftime("%d/%m/%Y %H:%M")
 
     def get_stock_status(self):
+        """Trả về trạng thái tồn kho"""
         if self.stock_quantity == 0:
             return "🚨 Hết hàng"
         elif self.stock_quantity <= self.min_threshold:
@@ -36,6 +40,7 @@ class Product:
             return "Bình thường"
 
     def to_dict(self):
+        """Chuyển object thành dict (để ghi CSV)"""
         return {
             "product_id": self.product_id,
             "name": self.name,
