@@ -1,34 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal, InvalidOperation
-from typing import Optional, Dict, Any
+from decimal import Decimal
+from typing import Any, Optional, Dict
 
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-
-def parse_date(value) -> datetime:
-    if value is None:
-        return datetime.now()
-    if isinstance(value, datetime):
-        return value
-    if isinstance(value, (int, float)):
-        # treat as timestamp
-        return datetime.fromtimestamp(value)
-    if isinstance(value, str):
-        s = value.strip()
-        # try a few common formats
-        fmts = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y", "%Y/%m/%d")
-        for f in fmts:
-            try:
-                return datetime.strptime(s, f)
-            except Exception:
-                continue
-    raise ValueError(f"Không thể parse ngày từ: {value!r}")
-
-
-def format_date(dt: datetime) -> str:
-    return dt.strftime(DATETIME_FORMAT)
-
+from validators import to_decimal, parse_iso_datetime, ensure_int
 
 @dataclass
 class Product:
@@ -40,99 +15,60 @@ class Product:
     stock_quantity: int
     min_threshold: int
     unit: str
-    created_date: datetime = field(default_factory=lambda: datetime.now())
-    last_updated: datetime = field(default_factory=lambda: datetime.now())
+    created_date: Optional[datetime] = field(default_factory=datetime.utcnow)
+    last_updated: Optional[datetime] = field(default_factory=datetime.utcnow)
 
     def __post_init__(self):
-        # enforce types and basic invariants
-        try:
-            # Decimal conversion if needed
-            if not isinstance(self.cost_price, Decimal):
-                self.cost_price = Decimal(str(self.cost_price))
-            if not isinstance(self.sell_price, Decimal):
-                self.sell_price = Decimal(str(self.sell_price))
-        except (InvalidOperation, ValueError) as e:
-            raise ValueError("Giá nhập/giá bán phải là số hợp lệ.") from e
-
-        # ints
-        self.stock_quantity = int(self.stock_quantity)
-        self.min_threshold = int(self.min_threshold)
-
+        self.name = str(self.name) if self.name is not None else ""
+        self.category = str(self.category) if self.category is not None else ""
+        self.unit = str(self.unit) if self.unit is not None else ""
+        self.cost_price = to_decimal(self.cost_price)
+        self.sell_price = to_decimal(self.sell_price)
+        self.stock_quantity = ensure_int(self.stock_quantity)
+        self.min_threshold = ensure_int(self.min_threshold)
+        if self.stock_quantity < 0:
+            raise ValueError("Số lượng tồn phải >= 0")
         if self.min_threshold < 0:
-            raise ValueError("Ngưỡng cảnh báo phải ≥ 0")
+            raise ValueError("Ngưỡng cảnh báo phải >= 0")
         if self.cost_price < 0:
-            raise ValueError("Giá nhập phải ≥ 0")
-        if self.sell_price < 0:
-            raise ValueError("Giá bán phải ≥ 0")
-        # Note: sell_price >= cost_price validation can be done here or in ProductManager.
-        # We prefer to enforce it here to make Product objects always valid:
+            raise ValueError("Giá nhập phải >= 0")
         if self.sell_price < self.cost_price:
-            raise ValueError("Giá bán phải ≥ giá nhập.")
+            raise ValueError("Giá bán phải >= giá nhập")
+        self.created_date = parse_iso_datetime(self.created_date) if self.created_date is not None else datetime.utcnow()
+        self.last_updated = parse_iso_datetime(self.last_updated) if self.last_updated is not None else datetime.utcnow()
 
-        # Ensure created_date/last_updated are datetime
-        if not isinstance(self.created_date, datetime):
-            self.created_date = parse_date(self.created_date)
-        if not isinstance(self.last_updated, datetime):
-            self.last_updated = parse_date(self.last_updated)
-
-    # ---------- factory + serialization ----------
-    @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "Product":
-        """Create Product from a CSV/DB row (dict). Accepts strings and converts."""
-        return cls(
-            product_id=str(d.get("product_id", "")).strip(),
-            name=str(d.get("name", "")).strip(),
-            category=str(d.get("category", "")).strip(),
-            cost_price=Decimal(str(d.get("cost_price", "0"))),
-            sell_price=Decimal(str(d.get("sell_price", "0"))),
-            stock_quantity=int(d.get("stock_quantity", 0)),
-            min_threshold=int(d.get("min_threshold", 0)),
-            unit=str(d.get("unit", "")).strip(),
-            created_date=d.get("created_date") or datetime.now(),
-            last_updated=d.get("last_updated") or datetime.now(),
-        )
-
-    def to_csv_row(self) -> Dict[str, str]:
-        """Return a dict with strings suitable for csv.DictWriter."""
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "product_id": self.product_id,
             "name": self.name,
             "category": self.category,
-            "cost_price": f"{self.cost_price:.2f}",
-            "sell_price": f"{self.sell_price:.2f}",
-            "stock_quantity": str(self.stock_quantity),
-            "min_threshold": str(self.min_threshold),
+            "cost_price": str(self.cost_price),
+            "sell_price": str(self.sell_price),
+            "stock_quantity": self.stock_quantity,
+            "min_threshold": self.min_threshold,
             "unit": self.unit,
-            "created_date": format_date(self.created_date),
-            "last_updated": format_date(self.last_updated),
+            "created_date": self.created_date.isoformat() if self.created_date else None,
+            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
         }
 
-    # ---------- business logic ----------
-    def update_stock(self, quantity: int, transaction_type: str = "nhập"):
-        """Update stock. transaction_type: 'nhập' or 'xuất'."""
-        qty = int(quantity)
-        tt = transaction_type.strip().lower()
-        if tt in ("nhập", "nhap", "in"):
-            self.stock_quantity += qty
-        elif tt in ("xuất", "xuat", "out"):
-            if qty > self.stock_quantity:
-                raise ValueError(f"Không đủ hàng: tồn hiện tại {self.stock_quantity}")
-            self.stock_quantity -= qty
-        else:
-            raise ValueError("transaction_type phải là 'nhập' hoặc 'xuất'")
-        self.last_updated = datetime.now()
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Product":
+        return cls(
+            product_id=data.get("product_id"),
+            name=data.get("name", ""),
+            category=data.get("category", ""),
+            cost_price=data.get("cost_price", "0"),
+            sell_price=data.get("sell_price", "0"),
+            stock_quantity=data.get("stock_quantity", 0),
+            min_threshold=data.get("min_threshold", 0),
+            unit=data.get("unit", ""),
+            created_date=data.get("created_date"),
+            last_updated=data.get("last_updated"),
+        )
 
-    def get_stock_status(self) -> str:
-        if self.stock_quantity == 0:
-            return "🚨 Hết hàng"
-        if self.stock_quantity <= self.min_threshold:
-            return "⚠️ Sắp hết"
-        return "Bình thường"
+    def to_csv_row(self) -> Dict[str, Any]:
+        return self.to_dict()
 
-    def profit_margin_percent(self) -> float:
-        if self.cost_price == 0:
-            return 0.0
-        return float((self.sell_price - self.cost_price) / self.cost_price * Decimal("100"))
-
-    def __repr__(self) -> str:
-        return f"<Product {self.product_id} {self.name} ({self.category}) SL={self.stock_quantity}>"
+    @classmethod
+    def from_csv_row(cls, row: Dict[str, Any]) -> "Product":
+        return cls.from_dict({k: (v if v != "" else None) for k, v in row.items()})
