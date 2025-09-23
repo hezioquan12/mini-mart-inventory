@@ -19,7 +19,10 @@ class CategoryManager:
     def save(self):
         if not self.storage_path:
             raise RuntimeError("No storage_path configured for CategoryManager")
-        self.storage_path.write_text(json.dumps(self._names, ensure_ascii=False, indent=2), encoding="utf-8")
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+        # atomic write
+        text = json.dumps(self._names, ensure_ascii=False, indent=2)
+        _atomic_write_text(self.storage_path, text)  # bạn cần import helper hoặc copy nó vào file này
 
     def get_all_names(self) -> List[str]:
         return list(self._names)
@@ -39,12 +42,12 @@ class CategoryManager:
         if self.storage_path:
             self.save()
 
-    def remove_category(self, name: str):
-        nn = normalize_name(name)
-        for n in list(self._names):
-            if normalize_name(n) == nn:
-                self._names.remove(n)
-                if self.storage_path:
-                    self.save()
-                return
-        raise ValueError("Danh mục không tồn tại")
+    def add_category(self, name: str):
+        if not name or not str(name).strip():
+            raise ValueError("Tên danh mục không được để trống")
+        name = str(name).strip()  # strip trước
+        if normalize_name(name) in self._normalized_set():
+            raise ValueError("Danh mục đã tồn tại")
+        self._names.append(name)
+        if self.storage_path:
+            self.save()
