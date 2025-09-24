@@ -36,15 +36,6 @@ class CategoryManager:
     def add_category(self, name: str):
         if not name or not str(name).strip():
             raise ValueError("Tên danh mục không được để trống")
-        if normalize_name(name) in self._normalized_set():
-            raise ValueError("Danh mục đã tồn tại")
-        self._names.append(str(name).strip())
-        if self.storage_path:
-            self.save()
-
-    def add_category(self, name: str):
-        if not name or not str(name).strip():
-            raise ValueError("Tên danh mục không được để trống")
         name = str(name).strip()  # strip trước
         if normalize_name(name) in self._normalized_set():
             raise ValueError("Danh mục đã tồn tại")
