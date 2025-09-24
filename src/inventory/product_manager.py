@@ -7,21 +7,23 @@ from datetime import datetime
 import os
 import tempfile
 import logging
+
 from product import Product
 from category_manager import CategoryManager
 from validators import normalize_name
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
 def _atomic_write_text(path: Path, text: str, encoding: str = "utf-8"):
     path.parent.mkdir(parents=True, exist_ok=True)
-    # write to temp file in same directory then replace
     fd, tmp_path = tempfile.mkstemp(dir=str(path.parent))
     try:
         with os.fdopen(fd, "w", encoding=encoding, newline="") as f:
             f.write(text)
         os.replace(tmp_path, str(path))
     except Exception:
-        # cleanup temp file if exists
         try:
             os.remove(tmp_path)
         except Exception:
@@ -50,6 +52,9 @@ class ProductManager:
         self.products: List[Product] = []
         self._load_products()
 
+    # ---------------------------
+    # Load / Save
+    # ---------------------------
     def _load_products(self):
         if not self.storage_file.exists():
             self.products = []
@@ -84,6 +89,9 @@ class ProductManager:
                 for p in self.products:
                     writer.writerow(p.to_csv_row())
 
+    # ---------------------------
+    # Export / Import
+    # ---------------------------
     def export_json(self, out_path: str):
         data = [p.to_dict() for p in self.products]
         out = Path(out_path)
@@ -110,6 +118,9 @@ class ProductManager:
             self.products = [Product.from_csv_row(r) for r in reader]
         self._save_products()
 
+    # ---------------------------
+    # Internal helpers
+    # ---------------------------
     def _find_index_by_id(self, product_id: str) -> Optional[int]:
         for i, p in enumerate(self.products):
             if p.product_id == product_id:
@@ -127,10 +138,13 @@ class ProductManager:
             if p.product_id == product_id:
                 raise ValueError("Product ID đã tồn tại")
 
+    # ---------------------------
+    # CRUD sản phẩm
+    # ---------------------------
     def add_product(self, product_id: str, name: str, category: str,
                     cost_price: Any, sell_price: Any, stock_quantity: Any,
                     min_threshold: Any, unit: str) -> Product:
-        # validation
+        """Thêm sản phẩm mới (chỉ dùng khi khởi tạo sản phẩm)."""
         if not product_id or not str(product_id).strip():
             raise ValueError("Product ID không được để trống")
         if not name or not str(name).strip():
@@ -153,8 +167,8 @@ class ProductManager:
             stock_quantity=stock_quantity,
             min_threshold=min_threshold,
             unit=unit,
-            created_date=datetime.utcnow().isoformat(),
-            last_updated=datetime.utcnow().isoformat(),
+            created_date=datetime.utcnow(),
+            last_updated=datetime.utcnow(),
         )
         self.products.append(product)
         self._save_products()
@@ -174,6 +188,7 @@ class ProductManager:
         self._save_products()
 
     def update_product(self, product_id: str, **changes) -> Product:
+        """Cập nhật metadata sản phẩm (không dùng để nhập/xuất kho!)."""
         idx = self._find_index_by_id(product_id)
         if idx is None:
             raise ValueError("Product không tồn tại")
@@ -187,8 +202,8 @@ class ProductManager:
             'stock_quantity': old.stock_quantity,
             'min_threshold': old.min_threshold,
             'unit': old.unit,
-            'created_date': old.created_date.isoformat() if old.created_date else None,
-            'last_updated': datetime.utcnow().isoformat(),
+            'created_date': old.created_date,
+            'last_updated': datetime.utcnow(),
         }
         for k, v in changes.items():
             if k not in merged:
@@ -199,27 +214,51 @@ class ProductManager:
                 merged[k] = v
         if not merged['name'] or not str(merged['name']).strip():
             raise ValueError("Tên sản phẩm không được để trống")
-        # if category changed (by normalized name), validate
         if normalize_name(merged['category']) != normalize_name(old.category):
             self._assert_category_exists(merged['category'])
-        # if id changed, validate uniqueness
         if merged['product_id'] != old.product_id:
             self._assert_unique_id(merged['product_id'], ignore_index=idx)
-        new_product = Product(
-            product_id=merged['product_id'],
-            name=merged['name'],
-            category=merged['category'],
-            cost_price=merged['cost_price'],
-            sell_price=merged['sell_price'],
-            stock_quantity=merged['stock_quantity'],
-            min_threshold=merged['min_threshold'],
-            unit=merged['unit'],
-            created_date=merged['created_date'],
-            last_updated=merged['last_updated'],
-        )
+        new_product = Product(**merged)
         self.products[idx] = new_product
         self._save_products()
         return new_product
 
     def list_products(self) -> List[Product]:
         return list(self.products)
+
+    # ---------------------------
+    # CHỖ DỄ CHỒNG CHÉO: tồn kho
+    # ---------------------------
+    def apply_stock_change(self, product_id: str, delta: int) -> Product:
+        """
+        Cập nhật số lượng tồn kho bằng delta.
+        - Dương = nhập thêm
+        - Âm = xuất kho
+        🚨 Chỉ được gọi từ TransactionManager (Luân).
+        Các module khác (Tuyên, Lực) KHÔNG được gọi trực tiếp.
+        """
+        idx = self._find_index_by_id(product_id)
+        if idx is None:
+            raise ValueError("Product không tồn tại")
+        product = self.products[idx]
+        new_qty = product.stock_quantity + delta
+        if new_qty < 0:
+            raise ValueError("Số lượng tồn không đủ")
+        return self.update_product(product_id, stock_quantity=new_qty, last_updated=datetime.utcnow())
+
+    # ---------------------------
+    # Tìm kiếm hỗ trợ Tuyên
+    # ---------------------------
+    def search_products(self, keyword: str, field: str = "name") -> List[Product]:
+        """
+        Tìm kiếm sản phẩm theo trường (name/product_id/category).
+        Dùng cho Tuyên (auto-complete, tìm kiếm linh hoạt).
+        """
+        keyword_norm = keyword.strip().lower()
+        results = []
+        for p in self.products:
+            value = getattr(p, field, "")
+            if keyword_norm in str(value).lower():
+                results.append(p)
+        return results
+
