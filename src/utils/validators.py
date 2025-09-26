@@ -8,9 +8,12 @@ def normalize_name(name: Any, ascii_only: bool = False) -> str:
     """
     Chuẩn hóa chuỗi để so sánh/tìm kiếm.
 
+    Loại bỏ khoảng trắng thừa, chuyển thành chữ thường.
+    Nếu ascii_only=True sẽ loại bỏ dấu và ký tự đặc biệt.
+
     Args:
         name: Chuỗi hoặc giá trị cần chuẩn hóa.
-        ascii_only: Nếu True sẽ loại bỏ dấu và ký tự đặc biệt.
+        ascii_only: Nếu True loại bỏ dấu và ký tự đặc biệt.
 
     Returns:
         Chuỗi đã chuẩn hóa.
@@ -21,21 +24,18 @@ def normalize_name(name: Any, ascii_only: bool = False) -> str:
     s = " ".join(str(name).strip().lower().split())  # loại bỏ khoảng trắng thừa
 
     if ascii_only:
-        unidecode_func = lambda x: x  # fallback mặc định
         try:
-            import unidecode
-            unidecode_func = unidecode.unidecode
+            import unidecode  # noqa: F401
+            s = unidecode.unidecode(s)
         except ImportError:
             warnings.warn("unidecode không được cài đặt, bỏ qua ascii_only.")
-
-        s = unidecode_func(s)
 
     return s
 
 
 def to_decimal(value: Any) -> Decimal:
     """
-    Ép về Decimal, hỗ trợ cả input dạng str với dấu phẩy.
+    Ép value về Decimal, hỗ trợ cả input dạng str với dấu phẩy.
 
     Args:
         value: Giá trị số hoặc chuỗi cần chuyển.
@@ -57,7 +57,11 @@ def to_decimal(value: Any) -> Decimal:
 
 def parse_iso_datetime(value: Optional[Any], default_now: bool = False) -> Optional[datetime]:
     """
-    Parse ISO datetime, trả về None hoặc thời điểm hiện tại nếu lỗi.
+    Parse ISO datetime thành datetime object timezone-aware (UTC).
+
+    Nếu parsing lỗi hoặc value=None:
+      - trả về None nếu default_now=False
+      - trả về datetime.now(timezone.utc) nếu default_now=True
 
     Args:
         value: Chuỗi datetime hoặc datetime object.
@@ -73,13 +77,11 @@ def parse_iso_datetime(value: Optional[Any], default_now: bool = False) -> Optio
         return datetime.now(timezone.utc) if default_now else None
 
     if isinstance(value, datetime):
-        # Nếu là naive datetime → convert thành timezone-aware UTC
-        if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
 
     try:
-        return datetime.fromisoformat(str(value))
+        parsed = datetime.fromisoformat(str(value))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     except Exception:
         if default_now:
             return datetime.now(timezone.utc)
@@ -88,7 +90,7 @@ def parse_iso_datetime(value: Optional[Any], default_now: bool = False) -> Optio
 
 def ensure_int(value: Any, must_be_positive: bool = False) -> int:
     """
-    Ép về int, tùy chọn bắt buộc >0.
+    Ép value về int.
 
     Args:
         value: Giá trị cần ép về int.
