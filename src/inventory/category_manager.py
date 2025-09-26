@@ -33,7 +33,12 @@ class CategoryManager:
                         text = self.storage_path.read_text(encoding="utf-8")
                         data = json.loads(text)
                         if isinstance(data, list):
-                            self._names = [str(n) for n in data]
+                            self._names = []
+                            for n in data:
+                                if isinstance(n, dict) and "name" in n:
+                                    self._names.append(str(n["name"]))
+                                elif isinstance(n, str):
+                                    self._names.append(n)
                         else:
                             logger.warning("Categories file %s doesn't contain a list. Ignoring.", self.storage_path)
                     else:

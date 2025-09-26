@@ -10,9 +10,8 @@ from datetime import datetime, timezone
 import os
 import tempfile
 import logging
-
-from product import Product
-from category_manager import CategoryManager
+from .product import Product
+from .category_manager import CategoryManager
 from src.utils.validators import normalize_name
 
 # Try to import centralized atomic writer; fallback to local implementation

@@ -5,8 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="comment ro rang va sua cac loi tiem tang">
+      <change afterPath="$PROJECT_DIR$/tests/categories.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/conftest.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_inventory.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_inventory_extended.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_inventory_extended2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_sales.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sales/transaction_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sales/transaction_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inventory/category_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inventory/category_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inventory/product_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inventory/product_manager.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,6 +25,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="Python Unit Test" />
       </list>
     </option>
   </component>
@@ -50,20 +59,43 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;luan&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/ADMIN/PycharmProjects/mini-mart-inventory/src/utils&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python tests.Python tests in test_inventory.py.executor": "Run",
+    "Python tests.pytest in PyCharm 2025.2.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "luan",
+    "last_opened_file_path": "C:/Users/ADMIN/PycharmProjects/mini-mart-inventory/src/utils",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ADMIN\PycharmProjects\mini-mart-inventory\src\utils" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="pytest in PyCharm 2025.2" type="tests" factoryName="py.test" nameIsGenerated="true">
+      <module name="mini-mart-inventory" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.13" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -104,7 +136,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758880482548</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="comment ro rang va sua cac loi tiem tang">
+      <option name="closed" value="true" />
+      <created>1758881592515</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1758881592515</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -122,5 +162,15 @@
     <MESSAGE value="chinh sua rang buoc tot hon nua" />
     <MESSAGE value="comment ro rang va sua cac loi tiem tang" />
     <option name="LAST_COMMIT_MESSAGE" value="comment ro rang va sua cac loi tiem tang" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/conftest.py</url>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
