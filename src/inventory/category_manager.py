@@ -2,18 +2,26 @@ from typing import List
 from pathlib import Path
 import json
 
-from validators import normalize_name
+from src.utils.validators import normalize_name
+from src.utils.io_utils import atomic_write_text
 
 class CategoryManager:
     def __init__(self, storage_path: str = None):
         self._names: List[str] = []
         self.storage_path = Path(storage_path) if storage_path else None
+
         if self.storage_path and self.storage_path.exists():
             try:
                 data = json.loads(self.storage_path.read_text(encoding="utf-8"))
                 if isinstance(data, list):
                     self._names = [str(n) for n in data]
-            except Exception:
+            except (OSError, json.JSONDecodeError) as e:   # 🔑 chỉ bắt IO + JSON
+                # log lỗi thay vì nuốt luôn
+                import logging
+                logging.getLogger(__name__).warning(
+                    "Failed to load categories from %s: %s. Resetting to empty.",
+                    self.storage_path, e
+                )
                 self._names = []
 
     def save(self):
@@ -22,7 +30,7 @@ class CategoryManager:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         # atomic write
         text = json.dumps(self._names, ensure_ascii=False, indent=2)
-        _atomic_write_text(self.storage_path, text)  # bạn cần import helper hoặc copy nó vào file này
+        atomic_write_text(self.storage_path, text)  # bạn cần import helper hoặc copy nó vào file này
 
     def get_all_names(self) -> List[str]:
         return list(self._names)

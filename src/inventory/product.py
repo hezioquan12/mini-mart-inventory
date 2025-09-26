@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime,UTC
 from decimal import Decimal
 from typing import Any, Optional, Dict
 
-from validators import to_decimal, parse_iso_datetime, ensure_int
+from src.utils.validators import to_decimal, parse_iso_datetime, ensure_int
 
 @dataclass
 class Product:
@@ -15,8 +15,8 @@ class Product:
     stock_quantity: int
     min_threshold: int
     unit: str
-    created_date: Optional[datetime] = field(default_factory=datetime.utcnow)
-    last_updated: Optional[datetime] = field(default_factory=datetime.utcnow)
+    created_date: Optional[datetime] = field(default_factory=lambda: datetime.now(UTC))
+    last_updated: Optional[datetime] = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self):
         self.name = str(self.name) if self.name is not None else ""
@@ -34,8 +34,10 @@ class Product:
             raise ValueError("Giá nhập phải >= 0")
         if self.sell_price < self.cost_price:
             raise ValueError("Giá bán phải >= giá nhập")
-        self.created_date = parse_iso_datetime(self.created_date) if self.created_date is not None else datetime.utcnow()
-        self.last_updated = parse_iso_datetime(self.last_updated) if self.last_updated is not None else datetime.utcnow()
+        self.created_date = parse_iso_datetime(self.created_date) if self.created_date is not None else datetime.now(
+            UTC)
+        self.last_updated = parse_iso_datetime(self.last_updated) if self.last_updated is not None else datetime.now(
+            UTC)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -53,17 +55,20 @@ class Product:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Product":
+        if not data.get("product_id"):
+            raise ValueError("Thiếu product_id trong dữ liệu")
+
         return cls(
-            product_id=data.get("product_id"),
-            name=data.get("name", ""),
-            category=data.get("category", ""),
-            cost_price=data.get("cost_price", "0"),
-            sell_price=data.get("sell_price", "0"),
-            stock_quantity=data.get("stock_quantity", 0),
-            min_threshold=data.get("min_threshold", 0),
-            unit=data.get("unit", ""),
-            created_date=data.get("created_date"),
-            last_updated=data.get("last_updated"),
+            product_id=str(data.get("product_id")),
+            name=str(data.get("name") or ""),
+            category=str(data.get("category") or ""),
+            cost_price=to_decimal(data.get("cost_price") or 0),  # ép thành Decimal
+            sell_price=to_decimal(data.get("sell_price") or 0),  # ép thành Decimal
+            stock_quantity=ensure_int(data.get("stock_quantity") or 0),  # ép int
+            min_threshold=ensure_int(data.get("min_threshold") or 0),  # ép int
+            unit=str(data.get("unit") or ""),
+            created_date=parse_iso_datetime(data.get("created_date")),
+            last_updated=parse_iso_datetime(data.get("last_updated")),
         )
 
     def to_csv_row(self) -> Dict[str, Any]:

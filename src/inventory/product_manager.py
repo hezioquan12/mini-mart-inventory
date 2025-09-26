@@ -3,14 +3,14 @@ from typing import List, Optional, Any, Dict
 from pathlib import Path
 import json
 import csv
-from datetime import datetime
+from datetime import datetime,UTC
 import os
 import tempfile
 import logging
 
 from product import Product
 from category_manager import CategoryManager
-from validators import normalize_name
+from src.utils.validators import normalize_name
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -22,13 +22,13 @@ def _atomic_write_text(path: Path, text: str, encoding: str = "utf-8"):
     try:
         with os.fdopen(fd, "w", encoding=encoding, newline="") as f:
             f.write(text)
-        os.replace(tmp_path, str(path))
-    except Exception:
+        os.replace(tmp_path, str(path))  # atomic replace
+    except (OSError, IOError) as e:   # 🔑 chỉ bắt lỗi liên quan file/IO
         try:
             os.remove(tmp_path)
-        except Exception:
-            pass
-        raise
+        except OSError:
+            pass  # ignore cleanup failure
+        raise e
 
 
 class ProductManager:
@@ -59,21 +59,24 @@ class ProductManager:
         if not self.storage_file.exists():
             self.products = []
             return
+
         if self._use_json:
             try:
                 data = json.loads(self.storage_file.read_text(encoding="utf-8"))
                 if isinstance(data, list):
                     self.products = [Product.from_dict(d) for d in data]
-            except Exception:
-                logger.exception("Failed to load products from json; starting with empty list.")
+                else:
+                    self.products = []
+            except (OSError, json.JSONDecodeError) as e:  # 🔑 chỉ bắt lỗi IO và parse JSON
+                logger.exception("Failed to load products from json (%s). Starting with empty list.", e)
                 self.products = []
         else:
             try:
                 with self.storage_file.open(mode="r", encoding="utf-8", newline="") as f:
                     reader = csv.DictReader(f)
                     self.products = [Product.from_csv_row(r) for r in reader]
-            except Exception:
-                logger.exception("Failed to load products from csv; starting with empty list.")
+            except (OSError, csv.Error) as e:  # 🔑 chỉ bắt lỗi file hoặc CSV parse
+                logger.exception("Failed to load products from csv (%s). Starting with empty list.", e)
                 self.products = []
 
     def _save_products(self):
@@ -167,8 +170,8 @@ class ProductManager:
             stock_quantity=stock_quantity,
             min_threshold=min_threshold,
             unit=unit,
-            created_date=datetime.utcnow(),
-            last_updated=datetime.utcnow(),
+            created_date=datetime.now(UTC),   # thời điểm tạo, timezone-aware UTC
+            last_updated=datetime.now(UTC),   # thời điểm cập nhật cuối
         )
         self.products.append(product)
         self._save_products()
@@ -203,7 +206,7 @@ class ProductManager:
             'min_threshold': old.min_threshold,
             'unit': old.unit,
             'created_date': old.created_date,
-            'last_updated': datetime.utcnow(),
+            'last_updated': datetime.now(UTC),
         }
         for k, v in changes.items():
             if k not in merged:
@@ -244,7 +247,7 @@ class ProductManager:
         new_qty = product.stock_quantity + delta
         if new_qty < 0:
             raise ValueError("Số lượng tồn không đủ")
-        return self.update_product(product_id, stock_quantity=new_qty, last_updated=datetime.utcnow())
+        return self.update_product(product_id, stock_quantity=new_qty, last_updated=datetime.now(UTC))
 
     # ---------------------------
     # Tìm kiếm hỗ trợ Tuyên
