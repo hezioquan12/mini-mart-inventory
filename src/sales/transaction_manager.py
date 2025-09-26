@@ -144,6 +144,7 @@ class TransactionManager:
         )
 
         self.transactions.append(tx)
+        self.log_transaction(tx)
 
         # persist and rollback on failure
         try:
@@ -242,3 +243,52 @@ class TransactionManager:
             }
             for p in self.product_mgr.list_products()
         ]
+    def log_transaction(self, transaction: Transaction) -> None:
+        """Ghi log chi tiết giao dịch vào file transaction_log.txt."""
+        log_file = self.storage_file.parent / "transaction_log.txt"
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        log_line = f"{datetime.now(timezone.utc).isoformat()} | {transaction.transaction_id} | {transaction.product_id} | {transaction.trans_type} | {transaction.quantity} | {transaction.date.isoformat()} | {transaction.note}\n"
+        try:
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(log_line)
+        except Exception:
+            logger.exception("Không thể ghi log giao dịch: %s", transaction.transaction_id)
+
+    def search_transactions(self, keyword: str) -> List[Transaction]:
+        """Tìm kiếm giao dịch theo keyword (mã SP hoặc ghi chú)."""
+        keyword_norm = keyword.strip().lower()
+        return [
+            t for t in self.transactions
+            if keyword_norm in t.product_id.lower() or keyword_norm in t.note.lower()
+        ]
+    def export_transactions_filtered(self, out_path: Union[str, Path],
+                                     product_id: Optional[str] = None,
+                                     trans_type: Optional[str] = None,
+                                     date_from: Optional[Any] = None,
+                                     date_to: Optional[Any] = None) -> None:
+        """Xuất transactions theo filter vào CSV/JSON."""
+        filtered = self.filter_transactions(product_id, trans_type, date_from, date_to)
+        out = Path(out_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        rows = [t.to_dict() for t in filtered]
+        if out.suffix.lower() == ".json":
+            _atomic_write(out, json.dumps(rows, ensure_ascii=False, indent=2))
+            return
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=self.DEFAULT_FIELDS)
+        writer.writeheader()
+        for r in rows:
+            writer.writerow(r)
+        _atomic_write(out, buf.getvalue())
+    def get_stock(self, product_id: str) -> Optional[int]:
+        """Lấy số lượng tồn kho của một sản phẩm."""
+        try:
+            product = self.product_mgr.get_product(product_id)
+            return product.stock_quantity
+        except Exception:
+            logger.warning("Không tìm thấy sản phẩm %s để lấy tồn kho", product_id)
+            return None
+
+    def get_all_stock(self) -> Dict[str, int]:
+        """Trả về dict {product_id: tồn kho}."""
+        return {p.product_id: p.stock_quantity for p in self.product_mgr.list_products()}
