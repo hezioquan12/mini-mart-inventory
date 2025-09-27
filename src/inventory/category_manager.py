@@ -22,9 +22,7 @@ class CategoryManager:
     def __init__(self, storage_path: Optional[Union[str, Path]] = None) -> None:
         self._names: List[str] = []
         self._normalized_cache: Optional[set[str]] = None
-
         self.storage_path: Optional[Path] = Path(storage_path) if storage_path else None
-
         if self.storage_path:
             # Nếu path tồn tại và là file, load; nếu là thư mục hoặc không tồn tại thì bỏ qua
             try:

@@ -6,7 +6,12 @@ from pathlib import Path
 from src.inventory.product_manager import ProductManager
 from src.inventory.category_manager import CategoryManager
 
-
+@pytest.fixture
+def temp_product_manager(temp_category_manager):
+    return ProductManager(category_mgr=temp_category_manager)
+@pytest.fixture
+def temp_category_manager():
+    return CategoryManager()
 @pytest.fixture
 def temp_product_manager():
     tmp_dir = tempfile.mkdtemp()
