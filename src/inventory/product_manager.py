@@ -1,12 +1,12 @@
 
 # src/inventory/product_manager.py
 from __future__ import annotations
-
+from src.utils.time_zone import VN_TZ
 from typing import List, Optional, Any, Dict, Union
 from pathlib import Path
 import json
 import csv
-from datetime import datetime, timezone
+from datetime import datetime
 import os
 import tempfile
 import logging
@@ -17,8 +17,11 @@ from src.utils.validators import normalize_name
 # Try to import centralized atomic writer; fallback to local implementation
 try:
     from src.utils.io_utils import atomic_write_text
-except Exception:
+except ImportError as e:
+    import logging
+    logging.getLogger(__name__).warning("Không import được atomic_write_text: %s", e)
     atomic_write_text = None  # type: ignore
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +36,7 @@ def _atomic_write_text_fallback(path: Path, text: str, encoding: str = "utf-8"):
         with os.fdopen(fd, "w", encoding=encoding, newline="") as f:
             f.write(text)
         os.replace(tmp_path, str(path))
-    except (OSError, IOError) as e:
+    except (OSError, IOError) :
         # cleanup
         try:
             os.remove(tmp_path)
@@ -196,8 +199,8 @@ class ProductManager:
             stock_quantity=stock_quantity,
             min_threshold=min_threshold,
             unit=unit,
-            created_date=datetime.now(timezone.utc),
-            last_updated=datetime.now(timezone.utc),
+            created_date=datetime.now(VN_TZ),
+            last_updated=datetime.now(VN_TZ),
         )
 
         # append then try save; rollback if save fails
@@ -244,7 +247,7 @@ class ProductManager:
             'min_threshold': old.min_threshold,
             'unit': old.unit,
             'created_date': old.created_date,
-            'last_updated': datetime.now(timezone.utc),
+            'last_updated': datetime.now(VN_TZ),
         }
 
         for k, v in changes.items():
@@ -288,7 +291,7 @@ class ProductManager:
         if new_qty < 0:
             raise ValueError("Số lượng tồn không đủ")
         # use update_product to validate and save (it returns new Product)
-        return self.update_product(product_id, stock_quantity=new_qty, last_updated=datetime.now(timezone.utc))
+        return self.update_product(product_id, stock_quantity=new_qty, last_updated=datetime.now(VN_TZ))
 
     # ---------------------------
     # Tìm kiếm

@@ -1,8 +1,8 @@
 from decimal import Decimal, InvalidOperation
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Optional
+from src.utils.time_zone import VN_TZ
 import warnings
-
 
 def normalize_name(name: Any, ascii_only: bool = False) -> str:
     """
@@ -74,17 +74,17 @@ def parse_iso_datetime(value: Optional[Any], default_now: bool = False) -> Optio
         ValueError: Nếu định dạng datetime không hợp lệ.
     """
     if value is None:
-        return datetime.now(timezone.utc) if default_now else None
+        return datetime.now(VN_TZ) if default_now else None
 
     if isinstance(value, datetime):
-        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return value if value.tzinfo else value.replace(tzinfo=VN_TZ)
 
     try:
         parsed = datetime.fromisoformat(str(value))
-        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=VN_TZ)
     except Exception:
         if default_now:
-            return datetime.now(timezone.utc)
+            return datetime.now(VN_TZ)
         raise ValueError(f"Invalid datetime format: {value!r}")
 
 

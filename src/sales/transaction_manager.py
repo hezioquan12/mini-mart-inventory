@@ -8,7 +8,8 @@ import logging
 import os
 import tempfile
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
+from src.utils.time_zone import VN_TZ
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -179,14 +180,14 @@ class TransactionManager:
             return None
         if isinstance(d, datetime):
             if d.tzinfo is None:
-                return d.replace(tzinfo=timezone.utc)
+                return d.replace(tzinfo=VN_TZ)
             return d
         # parse ISO-like strings using shared validator
         parsed = parse_iso_datetime(d)
         if parsed is None:
             return None
         if parsed.tzinfo is None:
-            return parsed.replace(tzinfo=timezone.utc)
+            return parsed.replace(tzinfo=VN_TZ)
         return parsed
 
     def filter_transactions(self,
@@ -247,7 +248,7 @@ class TransactionManager:
         """Ghi log chi tiết giao dịch vào file transaction_log.txt."""
         log_file = self.storage_file.parent / "transaction_log.txt"
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        log_line = f"{datetime.now(timezone.utc).isoformat()} | {transaction.transaction_id} | {transaction.product_id} | {transaction.trans_type} | {transaction.quantity} | {transaction.date.isoformat()} | {transaction.note}\n"
+        log_line = f"{datetime.now(VN_TZ).isoformat()} | {transaction.transaction_id} | {transaction.product_id} | {transaction.trans_type} | {transaction.quantity} | {transaction.date.isoformat()} | {transaction.note}\n"
         try:
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(log_line)

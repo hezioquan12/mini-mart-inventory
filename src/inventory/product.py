@@ -1,8 +1,8 @@
 # src/inventory/product.py
 from __future__ import annotations
-
+from src.utils.time_zone import VN_TZ
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional, Dict
 
@@ -13,7 +13,7 @@ from src.utils.validators import to_decimal, parse_iso_datetime, ensure_int
 class Product:
     """
     Model cho một sản phẩm trong kho.
-    created_date / last_updated luôn là timezone-aware (UTC).
+    created_date / last_updated luôn là timezone-aware (UTC+7).
     """
     product_id: str
     name: str
@@ -23,8 +23,8 @@ class Product:
     stock_quantity: int
     min_threshold: int
     unit: str
-    created_date: Optional[datetime] = field(default_factory=lambda: datetime.now(timezone.utc))
-    last_updated: Optional[datetime] = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_date: Optional[datetime] = field(default_factory=lambda: datetime.now(VN_TZ))
+    last_updated: Optional[datetime] = field(default_factory=lambda: datetime.now(VN_TZ))
 
     def __post_init__(self) -> None:
         # Basic normalize + validate product_id
@@ -113,7 +113,7 @@ class Product:
         if new_qty < 0:
             raise ValueError("Thao tác này sẽ làm số lượng < 0")
         self.stock_quantity = new_qty
-        self.last_updated = datetime.now(timezone.utc)
+        self.last_updated = datetime.now(VN_TZ)
 
     def update_prices(self, cost_price: Any = None, sell_price: Any = None) -> None:
         """
@@ -135,4 +135,4 @@ class Product:
 
         self.cost_price = new_cost
         self.sell_price = new_sell
-        self.last_updated = datetime.now(timezone.utc)
+        self.last_updated = datetime.now(VN_TZ)

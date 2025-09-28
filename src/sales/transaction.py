@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict
 import uuid
 import logging
-
+from src.utils.time_zone import VN_TZ
 from src.utils.validators import ensure_int, parse_iso_datetime
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class Transaction:
     product_id: str
     trans_type: str  # expected "IMPORT" or "EXPORT"
     quantity: int
-    date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    date: datetime = field(default_factory=lambda: datetime.now(VN_TZ))
     note: str = ""
 
     def __post_init__(self) -> None:
