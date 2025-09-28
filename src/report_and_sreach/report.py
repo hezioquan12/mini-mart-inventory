@@ -275,7 +275,74 @@ def export_alerts_xlsx(alerts: Alerts, out_xlsx_path: str = "data/low_stock_aler
 
     Path(out_xlsx_path).parent.mkdir(parents=True, exist_ok=True)
     wb.save(str(out_xlsx_path))
+# ==============================
+# 📝 Transaction Log Reports
+# ==============================
 
+def format_transaction_log(transactions: List[Any]) -> str:
+    """Xuất nhật ký giao dịch dạng text."""
+    lines = [
+        "========== NHẬT KÝ GIAO DỊCH ==========",
+        f"Tổng số giao dịch: {len(transactions)}",
+        "",
+    ]
+    for t in transactions:
+        lines.append(
+            f"- {t.transaction_id}: {t.product_id} | {t.trans_type} | "
+            f"{t.quantity} | {t.date.isoformat()} | {t.note or ''}"
+        )
+    return "\n".join(lines)
+
+
+def export_transaction_log(
+    transaction_mgr,
+    *,
+    out_txt_path: Optional[str] = "data/transaction_log.txt",
+    out_csv_path: Optional[str] = "data/transaction_log.csv",
+    out_json_path: Optional[str] = "data/transaction_log.json",
+    out_xlsx_path: Optional[str] = "data/transaction_log.xlsx",
+    encoding: str = DEFAULT_ENCODING,
+) -> None:
+    """Xuất nhật ký giao dịch ra TXT, CSV, JSON, Excel."""
+
+    transactions = transaction_mgr.list_transactions()
+    rows = [t.to_dict() for t in transactions]
+
+    # TXT
+    if out_txt_path:
+        Path(out_txt_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(out_txt_path).write_text(format_transaction_log(transactions), encoding=encoding)
+
+    # CSV
+    if out_csv_path:
+        Path(out_csv_path).parent.mkdir(parents=True, exist_ok=True)
+        fieldnames = ["transaction_id", "product_id", "trans_type", "quantity", "date", "note"]
+        with Path(out_csv_path).open("w", encoding=encoding, newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows:
+                writer.writerow(row)
+
+    # JSON
+    if out_json_path:
+        Path(out_json_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(out_json_path).write_text(json.dumps(rows, ensure_ascii=False, indent=2, default=str), encoding=encoding)
+
+    # Excel
+    if out_xlsx_path:
+        if not _HAS_OPENPYXL:
+            logger.warning("openpyxl chưa được cài, bỏ qua export Excel.")
+        else:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Transactions"
+            ws.append(["transaction_id", "product_id", "trans_type", "quantity", "date", "note"])
+            for row in rows:
+                ws.append([row.get("transaction_id"), row.get("product_id"),
+                           row.get("trans_type"), row.get("quantity"),
+                           row.get("date"), row.get("note")])
+            Path(out_xlsx_path).parent.mkdir(parents=True, exist_ok=True)
+            wb.save(str(out_xlsx_path))
 
 # ==============================
 # 🚀 Main Entry

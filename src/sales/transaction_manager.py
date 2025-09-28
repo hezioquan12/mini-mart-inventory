@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 # relative imports (adjust if your package layout differs)
-from transaction import Transaction
+from src.sales.transaction import Transaction
 from src.inventory.product_manager import ProductManager
 
 # utilities
