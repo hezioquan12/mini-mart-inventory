@@ -1,18 +1,9 @@
 # src/report/report.py
 from __future__ import annotations
 
-"""
-📄 Module: report.py
-Sinh cảnh báo tồn kho, dự báo sớm và xuất báo cáo dưới nhiều định dạng.
-Cải tiến:
-- Loại bỏ warning (import thừa, shadowing)
-- Code ngắn gọn, dễ đọc
-- Chuẩn PEP8
-"""
-from src.utils.time_zone import VN_TZ
 from typing import Any, Dict, List, Optional, Iterable, Union
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import csv
 import json
 import logging
@@ -64,7 +55,7 @@ def compute_sale_rates(
     - product_ids = str  → trả về float cho sản phẩm đó
     - product_ids = list → trả về dict {pid: rate}
     """
-    now = datetime.now(VN_TZ)
+    now = datetime.now(timezone.utc)
     start = now - timedelta(days=lookback_days)
     totals: Dict[str, float] = defaultdict(float)
 
@@ -84,7 +75,7 @@ def compute_sale_rates(
         if not dt:
             continue
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=VN_TZ)
+            dt = dt.replace(tzinfo=timezone.utc)
 
         if dt >= start:
             totals[pid] += float(safe_get(t, "quantity", 0) or 0)
@@ -108,7 +99,7 @@ def generate_low_stock_alerts(
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
 ) -> Alerts:
     """Sinh cảnh báo tồn kho + dự báo."""
-    now_iso = datetime.now(VN_TZ).isoformat()
+    now_iso = datetime.now(timezone.utc).isoformat()
     out_of_stock, low_stock = [], []
     total_needed = 0
     category_summary: Dict[str, Dict[str, int]] = {}
