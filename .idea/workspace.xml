@@ -4,16 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="bo sung test case">
-      <change afterPath="$PROJECT_DIR$/src/utils/time_zone.py" afterDir="false" />
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="sửa múi giờ chuẩn utc+7 ở việt nam">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/inventory/product.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inventory/product.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/inventory/product_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inventory/product_manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/report_and_sreach/report.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/report_and_sreach/report.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sales/transaction.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sales/transaction.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sales/transaction_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sales/transaction_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/validators.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/validators.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -160,7 +153,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758961857591</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="sửa múi giờ chuẩn utc+7 ở việt nam">
+      <option name="closed" value="true" />
+      <created>1759061618815</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1759061618815</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -178,7 +179,8 @@
     <MESSAGE value="chinh sua rang buoc tot hon nua" />
     <MESSAGE value="comment ro rang va sua cac loi tiem tang" />
     <MESSAGE value="bo sung test case" />
-    <option name="LAST_COMMIT_MESSAGE" value="bo sung test case" />
+    <MESSAGE value="sửa múi giờ chuẩn utc+7 ở việt nam" />
+    <option name="LAST_COMMIT_MESSAGE" value="sửa múi giờ chuẩn utc+7 ở việt nam" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

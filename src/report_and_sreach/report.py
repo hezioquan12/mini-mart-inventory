@@ -9,10 +9,10 @@ Cải tiến:
 - Code ngắn gọn, dễ đọc
 - Chuẩn PEP8
 """
-
+from src.utils.time_zone import VN_TZ
 from typing import Any, Dict, List, Optional, Iterable, Union
 from pathlib import Path
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 import csv
 import json
 import logging
@@ -64,7 +64,7 @@ def compute_sale_rates(
     - product_ids = str  → trả về float cho sản phẩm đó
     - product_ids = list → trả về dict {pid: rate}
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(VN_TZ)
     start = now - timedelta(days=lookback_days)
     totals: Dict[str, float] = defaultdict(float)
 
@@ -84,7 +84,7 @@ def compute_sale_rates(
         if not dt:
             continue
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=VN_TZ)
 
         if dt >= start:
             totals[pid] += float(safe_get(t, "quantity", 0) or 0)
@@ -108,7 +108,7 @@ def generate_low_stock_alerts(
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
 ) -> Alerts:
     """Sinh cảnh báo tồn kho + dự báo."""
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(VN_TZ).isoformat()
     out_of_stock, low_stock = [], []
     total_needed = 0
     category_summary: Dict[str, Dict[str, int]] = {}
