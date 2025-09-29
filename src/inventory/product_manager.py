@@ -72,6 +72,8 @@ class ProductManager:
         self._use_json = self.storage_file.suffix.lower() == ".json"
         self.category_mgr = category_mgr or CategoryManager()
         self.products: List[Product] = []
+        # version counter cho index rebuild
+        self.version: int = 0
         self._load_products()
 
     # ---------------------------
@@ -214,7 +216,7 @@ class ProductManager:
             except ValueError:
                 logger.exception("Failed to rollback product after save error: %s", product_id)
             raise
-
+        self.version = getattr(self, "version", 0) + 1
         return product
 
     def get_product(self, product_id: str) -> Product:
@@ -229,6 +231,7 @@ class ProductManager:
             raise ValueError("Product không tồn tại")
         del self.products[idx]
         self._save_products()
+        self.version = getattr(self, "version", 0) + 1
 
     def update_product(self, product_id: str, **changes) -> Product:
         """Cập nhật metadata sản phẩm (không dùng để nhập/xuất kho!)."""
@@ -271,6 +274,7 @@ class ProductManager:
         new_product = Product(**merged)
         self.products[idx] = new_product
         self._save_products()
+        self.version = getattr(self, "version", 0) + 1
         return new_product
 
     def list_products(self) -> List[Product]:
