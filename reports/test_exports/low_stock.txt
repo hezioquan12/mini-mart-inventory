@@ -1,0 +1,12 @@
+========== CẢNH BÁO TỒN KHO ==========
+Thời điểm tạo báo cáo: 2025-09-28T21:02:08.245254+07:00
+
+🚨 HẾT HÀNG: Không có.
+
+⚠️ SẮP HẾT HÀNG (1 sản phẩm):
+- SP01: Sữa Vinamilk (2/20 hộp) - Cần nhập: 23 | bán/ngày=0.1; dự báo hết=20.0 ngày
+
+Tổng cần nhập (tất cả sản phẩm): 23
+
+📂 Thống kê theo danh mục:
+- Đồ uống: Hết hàng=0; Sắp hết=1

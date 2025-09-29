@@ -1,0 +1,2 @@
+product_id,name,category,cost_price,sell_price,stock_quantity,min_threshold,unit,created_date,last_updated
+SP01,Sữa Vinamilk,Đồ uống,10000,15000,2,20,hộp,2025-09-28T21:02:08.240567+07:00,2025-09-28T21:02:08.240960+07:00
