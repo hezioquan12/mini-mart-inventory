@@ -1,0 +1,15 @@
+📄 Module: sreach.py
+Bộ máy tìm kiếm linh hoạt (Search Engine) cho hệ thống quản lý kho.
+    Chức năng chính:
+      - Tìm kiếm sản phẩm theo mã, tên, danh mục (linh hoạt, hỗ trợ fuzzy search).
+      - Gợi ý tự động (autocomplete) khi người dùng nhập từ khóa.
+      - Tìm kiếm giao dịch theo mã sản phẩm hoặc ghi chú.
+      - Cảnh báo tồn kho (hết hàng, sắp hết hàng).
+
+Update:
+SearchEngine 2.0:
+      - Tìm sản phẩm (prefix, substring, fuzzy, không dấu, nhiều filter).
+      - Autocomplete (index-based, có invalidation).
+      - Cảnh báo tồn kho + gợi ý nhập hàng thông minh (reorder point).
+      - Xếp hạng thông minh (prefix > substring > fuzzy + popularity boost).
+      - Faceted search + pagination.
