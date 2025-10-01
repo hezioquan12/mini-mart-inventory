@@ -109,6 +109,9 @@ class SearchEngine:
 
         self._ensure_index()
 
+        if self._index is None:
+            return {"results": [], "total": 0, "facets": {}}
+
         kw_norm = _norm(keyword)
         kw_plain = _remove_accents(keyword)
 >>>>>>> Stashed changes
@@ -212,6 +215,9 @@ class SearchEngine:
             return []
 
         self._ensure_index()
+        if self._index is None:
+            return []
+
         allowed = {"product_id", "name", "category"}
         if field not in allowed:
             raise ValueError(f"Field '{field}' không hợp lệ.")
@@ -247,6 +253,8 @@ class SearchEngine:
     def get_stock_alerts(self, suggest_order: bool = True) -> Dict[str, Any]:
         """Sinh alerts tồn kho và gợi ý đơn hàng nếu cần."""
         self._ensure_index()
+        if self._index is None:
+            return {"out_of_stock": [], "low_stock": [], "total_to_order": 0}
         products = [entry["product"] for entry in self._index]
         alerts = {"out_of_stock": [], "low_stock": [], "total_to_order": 0}
 
