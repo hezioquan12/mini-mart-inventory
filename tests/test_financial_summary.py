@@ -110,3 +110,35 @@ def test_least_purchased_respects_include_zero_sales():
     ids2 = [it["product_id"] for it in s2["least_purchased"]]
     # If include_zero_sales=True, least_purchased will only include products that have sales recorded by the current implementation unless code includes zeros; ensure no crash and valid structure
     assert isinstance(s2["least_purchased"], list)
+
+
+def test_export_sales_summary_file(tmp_path):
+    pm = make_pm_with_products()
+    # add two products
+    pm.add_product("P1", "Prod A", "Misc", 200, 300, 10, 1, "u")
+    pm.add_product("P2", "Prod B", "Misc", 50, 80, 10, 1, "u")
+
+    from src.sales.transaction import Transaction
+    from datetime import datetime
+
+    # transactions in October 2025
+    t1 = Transaction(transaction_id="T1", product_id="P1", trans_type="EXPORT", quantity=2, date=datetime(2025,10,5,10,0,0))
+    t2 = Transaction(transaction_id="T2", product_id="P2", trans_type="EXPORT", quantity=1, date=datetime(2025,10,6,11,0,0))
+
+    tm = DummyTM([t1, t2])
+
+    # run summary and export CSV to tmp_path
+    summary = report.compute_financial_summary(pm, tm, month=10, year=2025, out_dir=tmp_path)
+
+    csv_path = tmp_path / "sales_summary_10_2025.csv"
+    assert csv_path.exists(), f"Expected CSV at {csv_path}"
+
+    content = csv_path.read_text(encoding="utf-8")
+    print("\n=== sales_summary_10_2025.csv ===\n")
+    print(content)
+    print("=== end of CSV ===\n")
+
+    # basic checks
+    assert "total_revenue" in content
+    expected_revenue = str(Decimal("300") * 2 + Decimal("80") * 1)
+    assert expected_revenue in content

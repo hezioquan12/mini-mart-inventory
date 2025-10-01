@@ -1,26 +1,26 @@
 [
   {
     "product_id": "P1",
-    "name": "A",
+    "name": "Prod A",
     "category": "Misc",
-    "cost_price": "100",
-    "sell_price": "200",
+    "cost_price": "200",
+    "sell_price": "300",
     "stock_quantity": 10,
     "min_threshold": 1,
     "unit": "u",
-    "created_date": "2025-09-30T01:00:35.497819+07:00",
-    "last_updated": "2025-09-30T01:00:35.497821+07:00"
+    "created_date": "2025-10-01T23:36:31.700584+07:00",
+    "last_updated": "2025-10-01T23:36:31.700586+07:00"
   },
   {
     "product_id": "P2",
-    "name": "B",
+    "name": "Prod B",
     "category": "Misc",
     "cost_price": "50",
-    "sell_price": "100",
+    "sell_price": "80",
     "stock_quantity": 10,
     "min_threshold": 1,
     "unit": "u",
-    "created_date": "2025-09-30T01:00:35.500852+07:00",
-    "last_updated": "2025-09-30T01:00:35.500858+07:00"
+    "created_date": "2025-10-01T23:36:31.703210+07:00",
+    "last_updated": "2025-10-01T23:36:31.703214+07:00"
   }
 ]

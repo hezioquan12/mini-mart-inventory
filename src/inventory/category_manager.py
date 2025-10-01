@@ -57,7 +57,7 @@ class CategoryManager:
     def _normalized_set(self) -> set:
         if self._normalized_cache is None:
             self._rebuild_normalized_cache()
-        return set(self._normalized_cache)  # return a copy to avoid external mutation
+        return set(self._normalized_cache or set())  # return a copy to avoid external mutation
 
     # ---------- public API ----------
     def save(self) -> None:

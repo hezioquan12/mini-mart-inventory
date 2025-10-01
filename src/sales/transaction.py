@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import uuid
 import logging
 from src.utils.time_zone import VN_TZ
@@ -23,7 +23,7 @@ class Transaction:
     product_id: str
     trans_type: str  # expected "IMPORT" or "EXPORT"
     quantity: int
-    date: datetime = field(default_factory=lambda: datetime.now(VN_TZ))
+    date: Optional[datetime] = field(default_factory=lambda: datetime.now(VN_TZ))
     note: str = ""
 
     def __post_init__(self) -> None:
@@ -47,7 +47,10 @@ class Transaction:
 
         # parse/normalize date to timezone-aware datetime (UTC)
         # parse_iso_datetime(..., default_now=True) đảm bảo trả về timezone-aware datetime
-        self.date = parse_iso_datetime(self.date, default_now=True)
+        dt = parse_iso_datetime(self.date, default_now=True)
+        if dt is None:
+            raise ValueError("date must not be None")
+        self.date = dt
 
         # ensure note is string
         self.note = str(self.note or "")

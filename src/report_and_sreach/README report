@@ -8,5 +8,11 @@ Sinh cảnh báo tồn kho, dự báo sớm và xuất báo cáo dưới nhiều
 - Xuất ra TXT, CSV, JSON, Excel (nếu có openpyxl)
 - Ghi file an toàn bằng atomic write (tránh hỏng file khi ghi)
 
+
+Báo cáo doanh thu theo tháng:
+- Doanh thu, Lợi nhuận, Chi phí của cả tháng, của từng loại hàng hóa và của 
+top 5 hàng hóa bán chạy nhất
+- Xuất ra file CSV
+
 Update:
 - Thêm ngày giờ VN cho chuẩn với kiểu dữ liệu

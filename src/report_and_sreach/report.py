@@ -335,7 +335,7 @@ def export_transaction_log(
 
     # Excel
     if out_xlsx_path:
-        if not _HAS_OPENPYXL or Workbook is None:
+        if not _HAS_OPENPYXL or Workbook is None:   
             logger.warning("openpyxl chưa được cài, bỏ qua export Excel.")
         else:
             wb = Workbook()
@@ -394,8 +394,14 @@ def compute_financial_summary(
     top_k: int = 5,
     include_zero_sales: bool = False,
     currency: str = "VND",
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    out_dir: Optional[Union[str, Path]] = None,
 ) -> Dict[str, Any]:
     """Compute revenue/profit totals, by-category breakdown and top-K lists.
+
+    If month and year are provided, only transactions in that month/year are counted
+    and a CSV file named sales_summary_MM_YYYY.csv will be written to out_dir (or ./data).
 
     Assumptions:
       - Transactions with trans_type 'IMPORT' are purchases (cost incurred).
@@ -414,8 +420,27 @@ def compute_financial_summary(
     qty_by_product: Dict[str, int] = defaultdict(int)
 
     # iterate transactions
-    transactions = list(transaction_mgr.list_transactions()) if hasattr(transaction_mgr, "list_transactions") else list(getattr(transaction_mgr, "transactions", []))
+    transactions = list(transaction_mgr.list_transactions()) 
+
+    # optionally filter by month/year
+    def _in_period(dt) -> bool:
+        if dt is None:
+            return False
+        # dt may be datetime or string
+        if not isinstance(dt, datetime):
+            dt = parse_iso_datetime(dt, default_now=False)
+            if not dt:
+                return False
+        if month is None or year is None:
+            return True
+        return (dt.month == int(month)) and (dt.year == int(year))
+
     for t in transactions:
+        # get transaction date and skip if not in requested period
+        tdate = getattr(t, "date", None)
+        if (month is not None and year is not None) and (not _in_period(tdate)):
+            continue
+
         pid = str(getattr(t, "product_id", "") or "").strip()
         ttype = str(getattr(t, "trans_type", "")).upper()
         qty = int(getattr(t, "quantity", 0) or 0)
@@ -478,18 +503,29 @@ def compute_financial_summary(
         res = []
         for pid, qty in items_list[:top_k]:
             p = products.get(pid)
+            if p is not None:
+                revenue = Decimal(str(p.sell_price)) * qty
+                cost = Decimal(str(p.cost_price)) * qty
+                profit = revenue - cost
+            else:
+                revenue = Decimal("0")
+                cost = Decimal("0")
+                profit = Decimal("0")
             res.append({
                 "product_id": pid,
                 "name": p.name if p is not None else "",
                 "category": p.category if p is not None else "",
                 "quantity_sold": qty,
+                "revenue": str(revenue),
+                "cost": str(cost),
+                "profit": str(profit),
             })
         return res
 
     top_sellers = make_item_list(items_sorted_desc)
     least_purchased = make_item_list(items_sorted_asc if include_zero_sales else [it for it in items_sorted_asc if it[1] > 0])
 
-    return {
+    summary = {
         "total_revenue": str(total_revenue),
         "total_cost": str(total_cost),
         "total_profit": str(total_profit),
@@ -499,6 +535,68 @@ def compute_financial_summary(
         "least_purchased": least_purchased,
         "product_sales": {pid: qty for pid, qty in qty_by_product.items()},
     }
+
+    # Export CSV if both month and year provided
+    if month is not None and year is not None:
+        try:
+            out_dir_path = Path(out_dir) if out_dir else Path("data")
+            out_dir_path.mkdir(parents=True, exist_ok=True)
+            fname = f"sales_summary_{int(month):02d}_{int(year)}.csv"
+            out_path = out_dir_path / fname
+            with out_path.open("w", encoding=DEFAULT_ENCODING, newline="") as f:
+                writer = csv.writer(f)
+                cur = summary.get("currency", "") or ""
+                def with_cur(val: Any) -> str:
+                    return f"{val} {cur}" if (val is not None and cur) else (str(val) if val is not None else "")
+                # Summary header
+                writer.writerow(["Key", "Value"])
+                writer.writerow(["total_revenue", with_cur(summary["total_revenue"])])
+                writer.writerow(["total_cost", with_cur(summary["total_cost"])])
+                writer.writerow(["total_profit", with_cur(summary["total_profit"])])
+                writer.writerow(["currency", summary["currency"]])
+                writer.writerow([])
+                # By category
+                writer.writerow(["By Category"])
+                writer.writerow(["category", "revenue", "cost", "profit", "quantity"])
+                for cat, stats in summary["by_category"].items():
+                    writer.writerow([
+                        cat,
+                        with_cur(stats.get("revenue", "0")),
+                        with_cur(stats.get("cost", "0")),
+                        with_cur(stats.get("profit", "0")),
+                        stats.get("quantity", 0),
+                    ])
+                writer.writerow([])
+                # Top sellers
+                writer.writerow(["Top Sellers"])
+                writer.writerow(["name", "category", "quantity_sold", "revenue", "cost", "profit"])
+                for it in summary["top_sellers"]:
+                    writer.writerow([
+                        it.get("name", ""),
+                        it.get("category", ""),
+                        it.get("quantity_sold", 0),
+                        with_cur(it.get("revenue", "0")),
+                        with_cur(it.get("cost", "0")),
+                        with_cur(it.get("profit", "0")),
+                    ])
+                writer.writerow([])
+                # Least purchased
+                writer.writerow(["Least Purchased"])
+                writer.writerow(["name", "category", "quantity_sold", "revenue", "cost", "profit"])
+                for it in summary["least_purchased"]:
+                    writer.writerow([
+                        it.get("name", ""),
+                        it.get("category", ""),
+                        it.get("quantity_sold", 0),
+                        with_cur(it.get("revenue", "0")),
+                        with_cur(it.get("cost", "0")),
+                        with_cur(it.get("profit", "0")),
+                    ])
+            logger.info("Wrote sales summary CSV: %s", str(out_path))
+        except Exception as e:
+            logger.exception("Failed to write sales summary CSV: %s", e)
+
+    return summary
 
 
 def format_financial_summary_text(summary: Dict[str, Any]) -> str:
@@ -522,9 +620,15 @@ def format_financial_summary_text(summary: Dict[str, Any]) -> str:
     lines.append("")
     lines.append("Top Sellers:")
     for it in summary.get("top_sellers", []):
-        lines.append(f"- {it['product_id']} {it['name']} ({it['category']}) quantity={it['quantity_sold']}")
+        rev = with_currency(it.get("revenue"))
+        cost = with_currency(it.get("cost"))
+        prof = with_currency(it.get("profit"))
+        lines.append(f"- {it.get('name','')} ({it.get('category','')}) quantity={it.get('quantity_sold',0)} revenue={rev} cost={cost} profit={prof}")
     lines.append("")
     lines.append("Least Purchased:")
     for it in summary.get("least_purchased", []):
-        lines.append(f"- {it['product_id']} {it['name']} ({it['category']}) quantity={it['quantity_sold']}")
+        rev = with_currency(it.get("revenue"))
+        cost = with_currency(it.get("cost"))
+        prof = with_currency(it.get("profit"))
+        lines.append(f"- {it.get('name','')} ({it.get('category','')}) quantity={it.get('quantity_sold',0)} revenue={rev} cost={cost} profit={prof}")
     return "\n".join(lines)

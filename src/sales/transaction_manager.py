@@ -208,9 +208,9 @@ class TransactionManager:
                 continue
             if trans_type and t.trans_type.upper() != trans_type.upper():
                 continue
-            if date_from_n and t.date < date_from_n:
+            if date_from_n and t.date is not None and t.date < date_from_n:
                 continue
-            if date_to_n and t.date > date_to_n:
+            if date_to_n and t.date is not None and t.date > date_to_n:
                 continue
             result.append(t)
         return result
@@ -248,7 +248,8 @@ class TransactionManager:
         """Ghi log chi tiết giao dịch vào file transaction_log.txt."""
         log_file = self.storage_file.parent / "transaction_log.txt"
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        log_line = f"{datetime.now(VN_TZ).isoformat()} | {transaction.transaction_id} | {transaction.product_id} | {transaction.trans_type} | {transaction.quantity} | {transaction.date.isoformat()} | {transaction.note}\n"
+        date_str = transaction.date.isoformat() if transaction.date is not None else ""
+        log_line = f"{datetime.now(VN_TZ).isoformat()} | {transaction.transaction_id} | {transaction.product_id} | {transaction.trans_type} | {transaction.quantity} | {date_str} | {transaction.note}\n"
         try:
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(log_line)

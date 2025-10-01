@@ -112,9 +112,8 @@ class SearchEngine:
         if self._index is None:
             return {"results": [], "total": 0, "facets": {}}
 
-        kw_norm = _norm(keyword)
+        kw_norm = normalize_name(keyword)
         kw_plain = _remove_accents(keyword)
->>>>>>> Stashed changes
         allowed = {"product_id", "name", "category"}
         if field and field not in allowed:
             raise ValueError(f"Field '{field}' không hợp lệ. Hỗ trợ: {allowed}")
@@ -293,13 +292,17 @@ class SearchEngine:
         txs = [
             t for t in self.trans_mgr.list_transactions()
             if t.product_id == p.product_id and t.trans_type == "EXPORT"
-               and getattr(t, "date", None) and t.date >= cutoff
+               and getattr(t, "date", None) is not None and t.date is not None and t.date >= cutoff
         ]
         if not txs:
             return max(0, p.min_threshold - p.stock_quantity)
 
         total_sold = sum(t.quantity for t in txs)
-        actual_days = max(1, (now - min(t.date for t in txs)).days)
+        dates = [t.date for t in txs if getattr(t, "date", None) is not None and t.date is not None]
+        if not dates:
+            actual_days = 1
+        else:
+            actual_days = max(1, (now - min(dates)).days)
         avg_per_day = total_sold / actual_days
 
         safety = max(1, int(0.2 * avg_per_day * lead_time_days))
