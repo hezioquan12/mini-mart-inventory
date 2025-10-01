@@ -1,0 +1,26 @@
+[
+  {
+    "product_id": "P1",
+    "name": "A",
+    "category": "Misc",
+    "cost_price": "100",
+    "sell_price": "200",
+    "stock_quantity": 10,
+    "min_threshold": 1,
+    "unit": "u",
+    "created_date": "2025-09-30T01:00:35.497819+07:00",
+    "last_updated": "2025-09-30T01:00:35.497821+07:00"
+  },
+  {
+    "product_id": "P2",
+    "name": "B",
+    "category": "Misc",
+    "cost_price": "50",
+    "sell_price": "100",
+    "stock_quantity": 10,
+    "min_threshold": 1,
+    "unit": "u",
+    "created_date": "2025-09-30T01:00:35.500852+07:00",
+    "last_updated": "2025-09-30T01:00:35.500858+07:00"
+  }
+]

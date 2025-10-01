@@ -116,7 +116,9 @@ def generate_low_stock_alerts(
         except Exception as e:
             logger.warning("Không thể lấy transactions: %s", e)
 
-    sale_rates = compute_sale_rates(transactions_all, lookback_days=lookback_days) if transactions_all else {}
+    sale_rates = compute_sale_rates(transactions_all, product_ids=None, lookback_days=lookback_days) if transactions_all else {}
+    if not isinstance(sale_rates, dict):
+        sale_rates = {}
 
     # Duyệt sản phẩm
     for p in product_mgr.list_products():
@@ -247,7 +249,7 @@ def alerts_to_json(alerts: Alerts, *, ensure_ascii: bool = False) -> str:
 
 def export_alerts_xlsx(alerts: Alerts, out_xlsx_path: str = "data/low_stock_alert.xlsx") -> None:
     """Xuất alerts sang Excel (3 sheet)."""
-    if not _HAS_OPENPYXL:
+    if not _HAS_OPENPYXL or Workbook is None:
         raise RuntimeError("openpyxl chưa được cài.")
 
     wb = Workbook()
@@ -256,6 +258,9 @@ def export_alerts_xlsx(alerts: Alerts, out_xlsx_path: str = "data/low_stock_aler
 
     # Out of stock
     ws_oos = wb.active
+    if ws_oos is None:
+        ws_oos = wb.create_sheet("OutOfStock")
+        wb.active = ws_oos
     ws_oos.title = "OutOfStock"
     ws_oos.append(headers)
     for item in alerts.get("out_of_stock", []):
@@ -330,11 +335,14 @@ def export_transaction_log(
 
     # Excel
     if out_xlsx_path:
-        if not _HAS_OPENPYXL:
+        if not _HAS_OPENPYXL or Workbook is None:
             logger.warning("openpyxl chưa được cài, bỏ qua export Excel.")
         else:
             wb = Workbook()
             ws = wb.active
+            if ws is None:
+                ws = wb.create_sheet("Transactions")
+                wb.active = ws
             ws.title = "Transactions"
             ws.append(["transaction_id", "product_id", "trans_type", "quantity", "date", "note"])
             for row in rows:
@@ -372,3 +380,151 @@ def run_and_persist(
         except Exception as e:
             logger.warning("Không thể export Excel: %s", e)
     return alerts
+
+
+# ==============================
+# Financial / Sales Summary
+# ==============================
+
+
+def compute_financial_summary(
+    product_mgr,
+    transaction_mgr,
+    *,
+    top_k: int = 5,
+    include_zero_sales: bool = False,
+    currency: str = "VND",
+) -> Dict[str, Any]:
+    """Compute revenue/profit totals, by-category breakdown and top-K lists.
+
+    Assumptions:
+      - Transactions with trans_type 'IMPORT' are purchases (cost incurred).
+      - Transactions with trans_type 'EXPORT' are sales (revenue earned).
+      - Product.cost_price and sell_price are Decimal-like strings in Product model.
+
+    Returns a dict with keys: total_revenue, total_cost, total_profit, by_category, top_sellers, least_purchased
+    """
+    from decimal import Decimal
+
+    # map products by id for quick lookup
+    products = {p.product_id: p for p in product_mgr.list_products()}
+
+    total_revenue = Decimal("0")
+    total_cost = Decimal("0")
+    qty_by_product: Dict[str, int] = defaultdict(int)
+
+    # iterate transactions
+    transactions = list(transaction_mgr.list_transactions()) if hasattr(transaction_mgr, "list_transactions") else list(getattr(transaction_mgr, "transactions", []))
+    for t in transactions:
+        pid = str(getattr(t, "product_id", "") or "").strip()
+        ttype = str(getattr(t, "trans_type", "")).upper()
+        qty = int(getattr(t, "quantity", 0) or 0)
+        if not pid or qty <= 0:
+            continue
+
+        prod = products.get(pid)
+        if ttype in ("EXPORT", "OUT"):
+            # revenue = sell_price * qty; cost = cost_price * qty
+            if prod is not None:
+                sell = Decimal(str(prod.sell_price))
+                cost = Decimal(str(prod.cost_price))
+            else:
+                # unknown product: treat prices as 0
+                sell = Decimal("0")
+                cost = Decimal("0")
+            total_revenue += sell * qty
+            total_cost += cost * qty
+            qty_by_product[pid] += qty
+        elif ttype == "IMPORT":
+            # purchase increases inventory cost but not revenue; treat as cost
+            if prod is not None:
+                cost = Decimal(str(prod.cost_price))
+            else:
+                cost = Decimal("0")
+            total_cost += cost * qty
+            # do not count imports in sold quantities
+
+    total_profit = total_revenue - total_cost
+
+    # by-category aggregation
+    by_category: Dict[str, Dict[str, Any]] = {}
+    for pid, sold_qty in qty_by_product.items():
+        prod = products.get(pid)
+        cat = prod.category if prod is not None else "UNCATEGORIZED"
+        if cat not in by_category:
+            by_category[cat] = {"revenue": Decimal("0"), "cost": Decimal("0"), "profit": Decimal("0"), "quantity": 0}
+        sell = Decimal(str(prod.sell_price)) if prod is not None else Decimal("0")
+        cost = Decimal(str(prod.cost_price)) if prod is not None else Decimal("0")
+        by_category[cat]["revenue"] += sell * sold_qty
+        by_category[cat]["cost"] += cost * sold_qty
+        by_category[cat]["profit"] += (sell - cost) * sold_qty
+        by_category[cat]["quantity"] += sold_qty
+
+    # convert Decimals to strings for JSON-friendly output
+    def dec_map(d: Dict[str, Any]) -> Dict[str, Any]:
+        out: Dict[str, Any] = {}
+        for k, v in d.items():
+            out[k] = str(v) if isinstance(v, Decimal) else v
+        return out
+
+    by_category_out = {cat: dec_map(stats) for cat, stats in by_category.items()}
+
+    # top K sellers and least purchased
+    items = [(pid, qty) for pid, qty in qty_by_product.items()]
+    items_sorted_desc = sorted(items, key=lambda x: x[1], reverse=True)
+    items_sorted_asc = sorted(items, key=lambda x: x[1])
+
+    def make_item_list(items_list):
+        res = []
+        for pid, qty in items_list[:top_k]:
+            p = products.get(pid)
+            res.append({
+                "product_id": pid,
+                "name": p.name if p is not None else "",
+                "category": p.category if p is not None else "",
+                "quantity_sold": qty,
+            })
+        return res
+
+    top_sellers = make_item_list(items_sorted_desc)
+    least_purchased = make_item_list(items_sorted_asc if include_zero_sales else [it for it in items_sorted_asc if it[1] > 0])
+
+    return {
+        "total_revenue": str(total_revenue),
+        "total_cost": str(total_cost),
+        "total_profit": str(total_profit),
+        "currency": currency,
+        "by_category": by_category_out,
+        "top_sellers": top_sellers,
+        "least_purchased": least_purchased,
+        "product_sales": {pid: qty for pid, qty in qty_by_product.items()},
+    }
+
+
+def format_financial_summary_text(summary: Dict[str, Any]) -> str:
+    lines = ["=== Financial Summary ==="]
+    cur = summary.get("currency") or ""
+    def with_currency(val: Any) -> str:
+        if val is None:
+            return ""
+        return f"{val} {cur}" if cur else str(val)
+
+    lines.append(f"Total Revenue: {with_currency(summary.get('total_revenue'))}")
+    lines.append(f"Total Cost: {with_currency(summary.get('total_cost'))}")
+    lines.append(f"Total Profit: {with_currency(summary.get('total_profit'))}")
+    lines.append("")
+    lines.append("By Category:")
+    for cat, stats in summary.get("by_category", {}).items():
+        rev = with_currency(stats.get('revenue'))
+        cost = with_currency(stats.get('cost'))
+        prof = with_currency(stats.get('profit'))
+        lines.append(f"- {cat}: revenue={rev} cost={cost} profit={prof} quantity={stats.get('quantity')}")
+    lines.append("")
+    lines.append("Top Sellers:")
+    for it in summary.get("top_sellers", []):
+        lines.append(f"- {it['product_id']} {it['name']} ({it['category']}) quantity={it['quantity_sold']}")
+    lines.append("")
+    lines.append("Least Purchased:")
+    for it in summary.get("least_purchased", []):
+        lines.append(f"- {it['product_id']} {it['name']} ({it['category']}) quantity={it['quantity_sold']}")
+    return "\n".join(lines)
