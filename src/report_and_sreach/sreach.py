@@ -110,9 +110,12 @@ class SearchEngine:
         self._ensure_index()
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         kw_norm = normalize_name(keyword)
         kw_plain = normalize_name(keyword, ascii_only=True)
 =======
+=======
+>>>>>>> Stashed changes
         if self._index is None:
             return {"results": [], "total": 0, "facets": {}}
 
