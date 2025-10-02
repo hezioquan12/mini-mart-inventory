@@ -632,3 +632,72 @@ def format_financial_summary_text(summary: Dict[str, Any]) -> str:
         prof = with_currency(it.get("profit"))
         lines.append(f"- {it.get('name','')} ({it.get('category','')}) quantity={it.get('quantity_sold',0)} revenue={rev} cost={cost} profit={prof}")
     return "\n".join(lines)
+
+
+def calculate_import_quantity(
+    product: Any,
+    transactions: List[Any],
+    days: int = 30,
+    lead_time: int = 7,
+    z: float = 1.65,
+) -> int:
+    """
+    Calculate how many units of `product` should be imported.
+
+    - Uses EXPORT transactions in the last `days` days to estimate demand.
+    - lead_time: expected days until delivery.
+    - z: safety factor (e.g. 1.65 for ~95% service level assuming normal demand).
+
+    Returns an integer quantity to order (>= 0).
+    """
+    from statistics import stdev
+
+    now = datetime.now(VN_TZ)
+    cutoff = now - timedelta(days=days)
+
+    pid = str(safe_get(product, "product_id") or "")
+    # collect sold quantities within period
+    sales: List[int] = []
+    for t in transactions:
+        t_pid = str(safe_get(t, "product_id") or "")
+        t_type = str(safe_get(t, "trans_type", "") or "").upper()
+        if t_pid != pid or t_type not in ("EXPORT", "OUT"):
+            continue
+
+        tdate = parse_iso_datetime(safe_get(t, "date"), default_now=False)
+        if not tdate:
+            continue
+        if tdate.tzinfo is None:
+            tdate = tdate.replace(tzinfo=VN_TZ)
+        if tdate < cutoff:
+            continue
+
+        qty = int(safe_get(t, "quantity", 0) or 0)
+        if qty > 0:
+            sales.append(qty)
+
+    stock_qty = int(safe_get(product, "stock_quantity", 0) or 0)
+    min_thr = int(safe_get(product, "min_threshold", 0) or 0)
+
+    if not sales:
+        return max(0, min_thr - stock_qty)
+
+    # average daily sales based on observed sales over 'days' window
+    avg_daily_sales = sum(sales) / float(days)
+
+    # expected demand during lead time
+    expected_demand = avg_daily_sales * lead_time
+
+    # safety stock from std dev of observed sales (if available)
+    safety_stock = (z * stdev(sales)) if len(sales) > 1 else 0.0
+
+    reorder_point = expected_demand + safety_stock
+
+    needed = int(max(0, round(reorder_point - stock_qty)))
+
+    # ensure at least reach min_threshold after ordering
+    if stock_qty + needed < min_thr:
+        needed = max(needed, min_thr - stock_qty)
+
+    return int(max(0, needed))
+
