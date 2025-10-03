@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Iterable, Union
 from pathlib import Path
 from datetime import datetime, timedelta
 import csv
+import os
 import json
 import logging
 from collections import defaultdict
@@ -470,16 +471,15 @@ def compute_financial_summary(
             # do not count imports in sold quantities
 
     total_profit = total_revenue - total_cost
-
-    # by-category aggregation
+    # by-category aggregation (fix: ensure all categories counted)
     by_category: Dict[str, Dict[str, Any]] = {}
     for pid, sold_qty in qty_by_product.items():
         prod = products.get(pid)
-        cat = prod.category if prod is not None else "UNCATEGORIZED"
+        cat = (getattr(prod, "category", None) or "UNCATEGORIZED").strip()
         if cat not in by_category:
             by_category[cat] = {"revenue": Decimal("0"), "cost": Decimal("0"), "profit": Decimal("0"), "quantity": 0}
-        sell = Decimal(str(prod.sell_price)) if prod is not None else Decimal("0")
-        cost = Decimal(str(prod.cost_price)) if prod is not None else Decimal("0")
+        sell = Decimal(str(getattr(prod, "sell_price", "0"))) if prod else Decimal("0")
+        cost = Decimal(str(getattr(prod, "cost_price", "0"))) if prod else Decimal("0")
         by_category[cat]["revenue"] += sell * sold_qty
         by_category[cat]["cost"] += cost * sold_qty
         by_category[cat]["profit"] += (sell - cost) * sold_qty
@@ -700,4 +700,120 @@ def calculate_import_quantity(
         needed = max(needed, min_thr - stock_qty)
 
     return int(max(0, needed))
+OUTPUT_DIR = "output"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+def export_full_report_txt(products, stock_alerts, revenue_summary, top_sellers, filename="bao_cao_nang_cao.txt"):
+    """
+    Xuất báo cáo nâng cao dạng txt gồm:
+    - Danh sách sản phẩm
+    - Cảnh báo tồn kho
+    - Báo cáo doanh thu
+    - Top sản phẩm
+    """
+
+    path = os.path.join(OUTPUT_DIR, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("========== BÁO CÁO NÂNG CAO ==========\n")
+        f.write(f"Ngày xuất: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+        # 1. Danh sách sản phẩm
+        f.write("1. DANH SÁCH SẢN PHẨM:\n")
+        f.write("| {0:<6} | {1:<20} | {2:<10} | {3:<10} | {4:<10} | {5:<6} | {6:<6} | {7:<10} |\n".format(
+            "Mã SP", "Tên sản phẩm", "Danh mục", "Giá nhập", "Giá bán", "Tồn", "Ngưỡng", "Trạng thái"
+        ))
+        f.write("-" * 95 + "\n")
+        for p in products:
+            f.write("| {0:<6} | {1:<20} | {2:<10} | {3:<10} | {4:<10} | {5:<6} | {6:<6} | {7:<10} |\n".format(
+                p["id"], p["name"], p["category"], p["cost"], p["price"],
+                p["stock"], p["threshold"], p["status"]
+            ))
+        f.write("\n")
+
+        # 2. Cảnh báo tồn kho
+        f.write("2. CẢNH BÁO TỒN KHO:\n")
+        f.write("🚨 HẾT HÀNG ({} sản phẩm):\n".format(len(stock_alerts["out_of_stock"])))
+        for sp in stock_alerts["out_of_stock"]:
+            f.write(f"- {sp['id']}: {sp['name']} ({sp['stock']}/{sp['threshold']})\n")
+        f.write("\n⚠️ SẮP HẾT HÀNG ({} sản phẩm):\n".format(len(stock_alerts["low_stock"])))
+        for sp in stock_alerts["low_stock"]:
+            f.write(f"- {sp['id']}: {sp['name']} ({sp['stock']}/{sp['threshold']})\n")
+        f.write("Tổng cần nhập: {} sản phẩm\n\n".format(stock_alerts["total_reorder"]))
+
+        # 3. Báo cáo doanh thu
+        f.write("3. BÁO CÁO DOANH THU:\n")
+        f.write("Tổng doanh thu: {0:,} VND\n".format(revenue_summary["revenue"]))
+        f.write("Tổng vốn: {0:,} VND\n".format(revenue_summary["cost"]))
+        f.write("Lợi nhuận: {0:,} VND ({1:.1f}%)\n".format(
+            revenue_summary["profit"], revenue_summary["margin"]
+        ))
+        f.write("\nTheo danh mục:\n")
+        for cat, value in revenue_summary["by_category"].items():
+            f.write(f"- {cat}: {value}\n")
+        f.write("\n")
+
+        # 4. Top sản phẩm
+        f.write("4. TOP SẢN PHẨM BÁN CHẠY:\n")
+        for i, sp in enumerate(top_sellers, start=1):
+            f.write(f"{i}. {sp['name']}: {sp['quantity']} {sp['unit']} - {sp['revenue']:,} VND\n")
+
+    print(f"✅ Đã xuất báo cáo nâng cao TXT: {path}")
+    return path
+OUTPUT_DIR = "reports"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+def export_full_report_txt(products, stock_alerts, revenue_summary, top_sellers, filename="bao_cao_nang_cao.txt"):
+    """
+    Xuất báo cáo nâng cao dạng txt gồm:
+    - Danh sách sản phẩm
+    - Cảnh báo tồn kho
+    - Báo cáo doanh thu
+    - Top sản phẩm
+    """
+
+    path = os.path.join(OUTPUT_DIR, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("========== BÁO CÁO NÂNG CAO ==========\n")
+        f.write(f"Ngày xuất: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+        # 1. Danh sách sản phẩm
+        f.write("1. DANH SÁCH SẢN PHẨM:\n")
+        f.write("| {0:<6} | {1:<20} | {2:<10} | {3:<10} | {4:<10} | {5:<6} | {6:<6} | {7:<10} |\n".format(
+            "Mã SP", "Tên sản phẩm", "Danh mục", "Giá nhập", "Giá bán", "Tồn", "Ngưỡng", "Trạng thái"
+        ))
+        f.write("-" * 95 + "\n")
+        for p in products:
+            f.write("| {0:<6} | {1:<20} | {2:<10} | {3:<10} | {4:<10} | {5:<6} | {6:<6} | {7:<10} |\n".format(
+                p["id"], p["name"], p["category"], p["cost"], p["price"],
+                p["stock"], p["threshold"], p["status"]
+            ))
+        f.write("\n")
+
+        # 2. Cảnh báo tồn kho
+        f.write("2. CẢNH BÁO TỒN KHO:\n")
+        f.write("🚨 HẾT HÀNG ({} sản phẩm):\n".format(len(stock_alerts["out_of_stock"])))
+        for sp in stock_alerts["out_of_stock"]:
+            f.write(f"- {sp['id']}: {sp['name']} ({sp['stock']}/{sp['threshold']})\n")
+        f.write("\n⚠️ SẮP HẾT HÀNG ({} sản phẩm):\n".format(len(stock_alerts["low_stock"])))
+        for sp in stock_alerts["low_stock"]:
+            f.write(f"- {sp['id']}: {sp['name']} ({sp['stock']}/{sp['threshold']})\n")
+        f.write("Tổng cần nhập: {} sản phẩm\n\n".format(stock_alerts["total_reorder"]))
+
+        # 3. Báo cáo doanh thu
+        f.write("3. BÁO CÁO DOANH THU:\n")
+        f.write("Tổng doanh thu: {0:,} VND\n".format(revenue_summary["revenue"]))
+        f.write("Tổng vốn: {0:,} VND\n".format(revenue_summary["cost"]))
+        f.write("Lợi nhuận: {0:,} VND ({1:.1f}%)\n".format(
+            revenue_summary["profit"], revenue_summary["margin"]
+        ))
+        f.write("\nTheo danh mục:\n")
+        for cat, value in revenue_summary["by_category"].items():
+            f.write(f"- {cat}: {value}\n")
+        f.write("\n")
+
+        # 4. Top sản phẩm
+        f.write("4. TOP SẢN PHẨM BÁN CHẠY:\n")
+        for i, sp in enumerate(top_sellers, start=1):
+            f.write(f"{i}. {sp['name']}: {sp['quantity']} {sp['unit']} - {sp['revenue']:,} VND\n")
+
+    print(f"✅ Đã xuất báo cáo nâng cao TXT: {path}")
+    return path

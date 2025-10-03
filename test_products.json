@@ -8,8 +8,8 @@
     "stock_quantity": 10,
     "min_threshold": 1,
     "unit": "u",
-    "created_date": "2025-10-01T23:36:31.700584+07:00",
-    "last_updated": "2025-10-01T23:36:31.700586+07:00"
+    "created_date": "2025-10-03T14:24:35.975642+07:00",
+    "last_updated": "2025-10-03T14:24:35.975644+07:00"
   },
   {
     "product_id": "P2",
@@ -20,7 +20,7 @@
     "stock_quantity": 10,
     "min_threshold": 1,
     "unit": "u",
-    "created_date": "2025-10-01T23:36:31.703210+07:00",
-    "last_updated": "2025-10-01T23:36:31.703214+07:00"
+    "created_date": "2025-10-03T14:24:35.977868+07:00",
+    "last_updated": "2025-10-03T14:24:35.977870+07:00"
   }
 ]

@@ -31,7 +31,7 @@ class TMMock:
         return list(self._transactions)
 
 def test_demo_generate_and_export_sales_summary():
-    tmp_path = Path("./")  # Change to desired output directory
+    tmp_path = Path("../reports/")  # Change to desired output directory
     """
     Demo test that generates a sales_summary_MM_YYYY.csv in tmp_path.
     Run with: pytest -q tests/test_financial_report_demo.py -s

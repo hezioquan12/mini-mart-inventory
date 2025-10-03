@@ -4,7 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="sửa cho đúng và giảm hàm thừa hoặc trùng" />
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="sửa cho đúng và giảm hàm thừa hoặc trùng">
+      <change afterPath="$PROJECT_DIR$/_init_.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/cli.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/streamlit_report_helpers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test_streamlit.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/utils/run_cli_with_input.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_cli.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_full_report.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_9_24_2025_4_08_PM_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_9_24_2025_4_08_PM__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_test_products.json" beforeDir="false" afterPath="$PROJECT_DIR$/data_test_products.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/demo_report_output.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/demo_report_output.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report_and_sreach/report.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/report_and_sreach/report.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_products.json" beforeDir="false" afterPath="$PROJECT_DIR$/test_products.json" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,7 +36,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="develop" />
+        <entry key="$PROJECT_DIR$" value="luan" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -37,7 +52,8 @@
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/hezioquan12/mini-mart-inventory.git&quot;,
     &quot;accountId&quot;: &quot;7a04c233-eab6-4b09-bad1-745dc22b587f&quot;
-  }
+  },
+  &quot;editorReviewEnabled&quot;: false
 }</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -51,14 +67,19 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python tests.Python tests in demo_report_output.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_cli.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_full_report.py.executor&quot;: &quot;Run&quot;,
     &quot;Python tests.Python tests in test_inventory.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_streamlit.py.executor&quot;: &quot;Run&quot;,
     &quot;Python tests.pytest in PyCharm 2025.2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.cli.executor&quot;: &quot;Run&quot;,
     &quot;Python.conftest.executor&quot;: &quot;Run&quot;,
     &quot;Python.test.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;luan&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;luc&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/ADMIN/PycharmProjects/mini-mart-inventory/src/utils&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
@@ -67,6 +88,9 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ADMIN\PycharmProjects\mini-mart-inventory\src\utils" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\ADMIN\PycharmProjects\mini-mart-inventory\tests" />
     </key>
   </component>
   <component name="RunManager">
@@ -186,6 +210,9 @@
     </task>
     <option name="localTasksCounter" value="11" />
     <servers />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.bat" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
