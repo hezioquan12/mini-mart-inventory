@@ -4,21 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="sửa cho đúng và giảm hàm thừa hoặc trùng">
-      <change afterPath="$PROJECT_DIR$/_init_.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/cli.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/streamlit_report_helpers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/test_streamlit.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/utils/run_cli_with_input.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_cli.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_full_report.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_9_24_2025_4_08_PM_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_9_24_2025_4_08_PM__Changes_.xml" beforeDir="false" />
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="thêm file tổng hợp thư viện cần cài">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data_test_products.json" beforeDir="false" afterPath="$PROJECT_DIR$/data_test_products.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/demo_report_output.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/demo_report_output.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report_and_sreach/report.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/report_and_sreach/report.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_products.json" beforeDir="false" afterPath="$PROJECT_DIR$/test_products.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test_streamlit.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test_streamlit.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,7 +67,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;luc&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/ADMIN/PycharmProjects/mini-mart-inventory/src/utils&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
@@ -208,7 +196,23 @@
       <option name="project" value="LOCAL" />
       <updated>1759160400282</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="sửa cho đúng và giảm hàm thừa hoặc trùng">
+      <option name="closed" value="true" />
+      <created>1759496756932</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1759496756933</updated>
+    </task>
+    <task id="LOCAL-00012" summary="thêm file tổng hợp thư viện cần cài">
+      <option name="closed" value="true" />
+      <created>1759496970114</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1759496970114</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -232,7 +236,8 @@
     <MESSAGE value="sửa múi giờ chuẩn utc+7 ở việt nam" />
     <MESSAGE value="them phan test xuat report va file xuat mau" />
     <MESSAGE value="sửa cho đúng và giảm hàm thừa hoặc trùng" />
-    <option name="LAST_COMMIT_MESSAGE" value="sửa cho đúng và giảm hàm thừa hoặc trùng" />
+    <MESSAGE value="thêm file tổng hợp thư viện cần cài" />
+    <option name="LAST_COMMIT_MESSAGE" value="thêm file tổng hợp thư viện cần cài" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

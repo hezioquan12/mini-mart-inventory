@@ -5,7 +5,7 @@ from pathlib import Path
 from decimal import Decimal
 from datetime import datetime
 import traceback
-
+import matplotlib.ticker as mticker
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -277,7 +277,6 @@ elif menu == "Reports / Export":
         year = st.number_input("Năm", value=datetime.now().year, step=1)
     with colm:
         month = st.number_input("Tháng", min_value=1, max_value=12, value=datetime.now().month)
-
     if st.button("Tạo báo cáo & biểu đồ"):
         try:
             summary = compute_financial_summary(pm, tm, month=month, year=year)
@@ -301,8 +300,17 @@ elif menu == "Reports / Export":
                 st.subheader("📊 Doanh thu & Lợi nhuận theo danh mục")
                 fig, ax = plt.subplots(figsize=(8, 4))
                 df_cat.plot(kind="bar", x="Danh mục", y=["Doanh thu", "Lợi nhuận"], ax=ax)
+
                 ax.set_ylabel("VND")
                 ax.set_title(f"Doanh thu & Lợi nhuận tháng {month}/{year}")
+
+                # Format số trên trục Y
+                ax.yaxis.set_major_formatter(mticker.StrMethodFormatter('{x:,.0f}'))
+
+                # Hiển thị giá trị trên cột
+                for container in ax.containers:
+                    ax.bar_label(container, fmt='{:,.0f}')
+
                 st.pyplot(fig)
 
             # -------- Biểu đồ 2: Line chart Xu hướng doanh thu theo ngày --------
@@ -314,6 +322,14 @@ elif menu == "Reports / Export":
                 df_day.plot(x="Ngày", y=["Doanh thu", "Lợi nhuận"], kind="line", marker="o", ax=ax2)
                 ax2.set_ylabel("VND")
                 ax2.set_title(f"Xu hướng doanh thu & lợi nhuận tháng {month}/{year}")
+
+                ax2.yaxis.set_major_formatter(mticker.StrMethodFormatter('{x:,.0f}'))
+
+                # Hiển thị giá trị lên từng điểm
+                for i, col in enumerate(["Doanh thu", "Lợi nhuận"]):
+                    for x, y in zip(df_day["Ngày"], df_day[col]):
+                        ax2.text(x, y, f'{y:,.0f}', fontsize=8, ha='center', va='bottom')
+
                 st.pyplot(fig2)
             else:
                 st.info("Không có dữ liệu xu hướng ngày.")
@@ -353,6 +369,13 @@ elif menu == "Reports / Export":
                             )
                             ax4.set_xlabel("Doanh thu (VND)")
                             ax4.set_title("Top sản phẩm bán chạy nhất")
+
+                            ax4.xaxis.set_major_formatter(mticker.StrMethodFormatter('{x:,.0f}'))
+
+                            # Hiển thị giá trị trên thanh ngang
+                            for container in ax4.containers:
+                                ax4.bar_label(container, fmt='{:,.0f}')
+
                             st.pyplot(fig4)
                         else:
                             st.info("Không có dữ liệu doanh thu hợp lệ để vẽ biểu đồ.")
@@ -367,6 +390,7 @@ elif menu == "Reports / Export":
         except Exception as e:
             st.error("Lỗi khi tạo báo cáo & biểu đồ")
             st.exception(traceback.format_exc())
+
 
 
 # ------------------ Settings ------------------
