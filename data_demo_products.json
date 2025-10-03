@@ -1,0 +1,38 @@
+[
+  {
+    "product_id": "P1",
+    "name": "Milk",
+    "category": "Drinks",
+    "cost_price": "10000",
+    "sell_price": "15000",
+    "stock_quantity": 50,
+    "min_threshold": 5,
+    "unit": "box",
+    "created_date": "2025-10-02T00:21:13.858773+07:00",
+    "last_updated": "2025-10-02T00:21:13.858781+07:00"
+  },
+  {
+    "product_id": "P2",
+    "name": "Soap",
+    "category": "Household",
+    "cost_price": "2000",
+    "sell_price": "3000",
+    "stock_quantity": 100,
+    "min_threshold": 10,
+    "unit": "piece",
+    "created_date": "2025-10-02T00:21:13.862634+07:00",
+    "last_updated": "2025-10-02T00:21:13.862637+07:00"
+  },
+  {
+    "product_id": "P3",
+    "name": "Candy",
+    "category": "Misc",
+    "cost_price": "500",
+    "sell_price": "1000",
+    "stock_quantity": 200,
+    "min_threshold": 20,
+    "unit": "pack",
+    "created_date": "2025-10-02T00:21:13.865400+07:00",
+    "last_updated": "2025-10-02T00:21:13.865404+07:00"
+  }
+]

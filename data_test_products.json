@@ -1,0 +1,26 @@
+[
+  {
+    "product_id": "P1",
+    "name": "Milk",
+    "category": "Drinks",
+    "cost_price": "10000",
+    "sell_price": "15000",
+    "stock_quantity": 50,
+    "min_threshold": 5,
+    "unit": "box",
+    "created_date": "2025-10-03T14:24:35.841418+07:00",
+    "last_updated": "2025-10-03T14:24:35.841420+07:00"
+  },
+  {
+    "product_id": "P2",
+    "name": "Soap",
+    "category": "Household",
+    "cost_price": "2000",
+    "sell_price": "3000",
+    "stock_quantity": 100,
+    "min_threshold": 10,
+    "unit": "piece",
+    "created_date": "2025-10-03T14:24:35.844612+07:00",
+    "last_updated": "2025-10-03T14:24:35.844615+07:00"
+  }
+]
