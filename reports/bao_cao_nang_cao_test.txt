@@ -1,0 +1,33 @@
+========== BÁO CÁO NÂNG CAO ==========
+Ngày xuất: 2025-10-03 15:21:50
+
+1. DANH SÁCH SẢN PHẨM:
+| Mã SP  | Tên sản phẩm         | Danh mục   | Giá nhập   | Giá bán    | Tồn    | Ngưỡng | Trạng thái |
+-----------------------------------------------------------------------------------------------
+| SP001  | Bánh mì sandwich     | Thực phẩm  | 15000      | 25000      | 45     | 10     | BÌNH THƯỜNG |
+| SP002  | Coca Cola 330ml      | Đồ uống    | 8000       | 12000      | 5      | 20     | SẮP HẾT    |
+| SP003  | Dầu gội Head&S       | Mỹ phẩm    | 80000      | 120000     | 0      | 5      | HẾT HÀNG   |
+
+2. CẢNH BÁO TỒN KHO:
+🚨 HẾT HÀNG (1 sản phẩm):
+- SP003: Dầu gội Head&S (0/5)
+
+⚠️ SẮP HẾT HÀNG (1 sản phẩm):
+- SP002: Coca Cola 330ml (5/20)
+Tổng cần nhập: 2 sản phẩm
+
+3. BÁO CÁO DOANH THU:
+Tổng doanh thu: 45,680,000 VND
+Tổng vốn: 32,150,000 VND
+Lợi nhuận: 13,530,000 VND (29.6%)
+
+Theo danh mục:
+- Thực phẩm: 18500000
+- Đồ uống: 12300000
+- Gia dụng: 8750000
+- Mỹ phẩm: 6130000
+
+4. TOP SẢN PHẨM BÁN CHẠY:
+1. Bánh mì sandwich: 1250 cái - 31,250,000 VND
+2. Nước suối 500ml: 890 chai - 8,900,000 VND
+3. Mì tôm Hảo Hảo: 450 gói - 6,750,000 VND

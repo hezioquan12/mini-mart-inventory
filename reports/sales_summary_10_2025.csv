@@ -1,0 +1,17 @@
+Key,Value
+total_revenue,1440 VND
+total_cost,3900 VND
+total_profit,-2460 VND
+currency,VND
+
+By Category
+category,revenue,cost,profit,quantity
+Drinks,1440 VND,900 VND,540 VND,18
+
+Top Sellers
+name,category,quantity_sold,revenue,cost,profit
+Milk,Drinks,18,1440 VND,900 VND,540 VND
+
+Least Purchased
+name,category,quantity_sold,revenue,cost,profit
+Milk,Drinks,18,1440 VND,900 VND,540 VND

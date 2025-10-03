@@ -1,0 +1,1 @@
+product_id,name,category,stock_quantity,min_threshold,unit,needed,type,daily_sale_rate,days_until_stockout,predicted_out_soon

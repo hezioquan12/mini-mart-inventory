@@ -1,0 +1,26 @@
+[
+  {
+    "product_id": "T1",
+    "name": "Test Product",
+    "category": "Misc",
+    "cost_price": "100",
+    "sell_price": "120",
+    "stock_quantity": 9,
+    "min_threshold": 2,
+    "unit": "cái",
+    "created_date": "2025-10-03T13:57:02.181733+07:00",
+    "last_updated": "2025-10-03T20:00:18.891857+07:00"
+  },
+  {
+    "product_id": "T2",
+    "name": "Milk",
+    "category": "Drinks",
+    "cost_price": "50",
+    "sell_price": "80",
+    "stock_quantity": 75,
+    "min_threshold": 2,
+    "unit": "hộp",
+    "created_date": "2025-10-03T13:57:02.188737+07:00",
+    "last_updated": "2025-10-03T14:24:35.857471+07:00"
+  }
+]
