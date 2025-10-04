@@ -220,19 +220,23 @@ elif menu == "Transactions":
 elif menu == "Reports / Export":
     st.header("Báo cáo & Xuất dữ liệu")
 
-    if st.button("Sinh cảnh báo tồn kho"):
+    if st.button("🚨 Sinh cảnh báo tồn kho"):
         try:
-            txt_path = REPORTS_DIR / "low_stock.txt"
-            csv_path = REPORTS_DIR / "low_stock.csv"
-            xlsx_path = REPORTS_DIR / "low_stock.xlsx"
+            txt_path = REPORTS_DIR / "low_stock_alert.txt"
+            csv_path = REPORTS_DIR / "low_stock_alert.csv"
+            xlsx_path = REPORTS_DIR / "low_stock_alert.xlsx"
 
-            alerts = run_and_persist(pm, tm,
-                                     out_txt_path=str(txt_path),
-                                     out_csv_path=str(csv_path),
-                                     out_xlsx_path=str(xlsx_path))
+            # ✅ Dùng run_and_persist từ report.py
+            alerts = run_and_persist(
+                pm, tm,
+                out_txt_path=str(txt_path),
+                out_csv_path=str(csv_path),
+                out_xlsx_path=str(xlsx_path)
+            )
 
-            st.text(format_alerts_text(alerts))
-            st.success("✅ Đã sinh cảnh báo và xuất file")
+            # Hiển thị kết quả trên giao diện
+            st.text_area("Cảnh báo tồn kho", format_alerts_text(alerts), height=300)
+            st.success("✅ Đã sinh cảnh báo và xuất đủ file TXT, CSV, XLSX")
             st.write(f"📂 File đã lưu trong thư mục: `{REPORTS_DIR.resolve()}`")
 
             # Nút tải CSV
@@ -241,7 +245,7 @@ elif menu == "Reports / Export":
                     st.download_button(
                         label="📥 Tải file CSV",
                         data=f_csv,
-                        file_name="low_stock.csv",
+                        file_name="low_stock_alert.csv",
                         mime="text/csv"
                     )
 
@@ -251,7 +255,7 @@ elif menu == "Reports / Export":
                     st.download_button(
                         label="📥 Tải file Excel",
                         data=f_xlsx,
-                        file_name="low_stock.xlsx",
+                        file_name="low_stock_alert.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
 
@@ -261,12 +265,12 @@ elif menu == "Reports / Export":
                     st.download_button(
                         label="📥 Tải file TXT",
                         data=f_txt,
-                        file_name="low_stock.txt",
+                        file_name="low_stock_alert.txt",
                         mime="text/plain"
                     )
 
         except Exception as e:
-            st.error(e)
+            st.error("❌ Lỗi khi sinh báo cáo tồn kho")
             st.exception(traceback.format_exc())
 
     st.markdown("---")

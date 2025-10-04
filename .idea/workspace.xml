@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="thêm file tổng hợp thư viện cần cài">
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="fix biểu đồ trực quan hơn">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/test_streamlit.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test_streamlit.py" afterDir="false" />
     </list>
@@ -28,7 +28,6 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -212,7 +211,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759496970114</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="fix biểu đồ trực quan hơn">
+      <option name="closed" value="true" />
+      <created>1759501985881</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1759501985881</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -237,7 +244,8 @@
     <MESSAGE value="them phan test xuat report va file xuat mau" />
     <MESSAGE value="sửa cho đúng và giảm hàm thừa hoặc trùng" />
     <MESSAGE value="thêm file tổng hợp thư viện cần cài" />
-    <option name="LAST_COMMIT_MESSAGE" value="thêm file tổng hợp thư viện cần cài" />
+    <MESSAGE value="fix biểu đồ trực quan hơn" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix biểu đồ trực quan hơn" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
