@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="fix biểu đồ trực quan hơn">
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="fix tạo báo cáo và tải về">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/test_streamlit.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test_streamlit.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/cli.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -219,7 +219,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759501985881</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="fix tạo báo cáo và tải về">
+      <option name="closed" value="true" />
+      <created>1759550182816</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1759550182816</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -245,7 +253,8 @@
     <MESSAGE value="sửa cho đúng và giảm hàm thừa hoặc trùng" />
     <MESSAGE value="thêm file tổng hợp thư viện cần cài" />
     <MESSAGE value="fix biểu đồ trực quan hơn" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix biểu đồ trực quan hơn" />
+    <MESSAGE value="fix tạo báo cáo và tải về" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix tạo báo cáo và tải về" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

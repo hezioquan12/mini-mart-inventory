@@ -1,508 +1,390 @@
-from __future__ import annotations
-#!/usr/bin/env python3
-# src/report_and_sreach/report.py
-from src.utils.time_zone import VN_TZ
-from typing import Any, Dict, List, Optional, Iterable, Union
 #!/usr/bin/env python3
 # src/cli/cli_vn.py
 """
-CLI tiếng Việt cho Mini-mart Inventory
-- Menu chính theo yêu cầu (quản lý sản phẩm, nhập/xuất, báo cáo, xuất dữ liệu)
-- Xuất 3 file: inventory_report.xlsx (hoặc .csv), sales_summary_MM_YYYY.csv, low_stock_alert.txt
-- Không có phần biểu đồ (bỏ để tránh tính năng rỗng)
+Giao diện dòng lệnh (CLI) tiếng Việt cho Hệ thống Quản lý Kho Mini-Mart.
+
+Phiên bản cải tiến:
+- Xử lý input an toàn, chống crash chương trình.
+- Tái cấu trúc code theo từng chức năng, dễ đọc, dễ bảo trì.
+- Thống nhất logic, chỉ sử dụng các hàm từ module lõi của dự án.
+- Cải thiện hiển thị output cho các bảng dữ liệu.
+- Loại bỏ các cảnh báo từ linter.
 """
-try:
-    from src.report_and_sreach.report import (
-        compute_financial_summary,
-        format_financial_summary_text,
-    )
-except Exception:
-    compute_financial_summary = None
-    format_financial_summary_text = None
+
 import sys
 import traceback
 from pathlib import Path
 from datetime import datetime
-from decimal import Decimal
-from typing import Optional, List, Dict, Any
+from decimal import Decimal, InvalidOperation
+from typing import Optional, List, Any, Dict
 
-# -------- Robust imports (thân thiện với nhiều cấu trúc project) ----------
-try:
+
+def run_cli_app():
+    """
+    Hàm chính chứa toàn bộ logic của ứng dụng.
+    Hàm này chỉ được gọi khi tất cả các module cần thiết đã được import thành công.
+    """
+    # --- Các import phụ thuộc được đặt bên trong để đảm bảo an toàn ---
     from src.inventory.product_manager import ProductManager
     from src.inventory.category_manager import CategoryManager
     from src.sales.transaction_manager import TransactionManager
-    try:
-        from src.report_and_sreach.report import generate_low_stock_alerts, export_alerts_xlsx, write_low_stock_alerts, format_alerts_text
-    except Exception:
-        # nếu module report không khớp, we'll compute inline
-        generate_low_stock_alerts = None
-        export_alerts_xlsx = None
-        write_low_stock_alerts = None
-        format_alerts_text = None
+    from src.report_and_sreach.report import (
+        generate_low_stock_alerts,
+        export_alerts_xlsx,
+        format_alerts_text,
+        compute_financial_summary,
+        format_financial_summary_text
+    )
+    from src.utils.time_zone import VN_TZ
 
     try:
-        from src.utils.time_zone import VN_TZ
-    except Exception:
-        import datetime as _dt
-        VN_TZ = _dt.timezone.utc  # fallback
+        from openpyxl import Workbook
+        HAS_OPENPYXL = True
+    except ImportError:
+        HAS_OPENPYXL = False
 
-except Exception as e:
-    print("Lỗi import module dự án. Hãy chạy script từ thư mục project root và kiểm tra PYTHONPATH.")
-    print("Import error:", e)
-    traceback.print_exc()
-    sys.exit(1)
+    # --- Cấu hình đường dẫn ---
+    DATA_DIR = Path("data")
+    REPORTS_DIR = Path("reports")
+    DATA_DIR.mkdir(exist_ok=True)
+    REPORTS_DIR.mkdir(exist_ok=True)
 
-# Optional dependency
-try:
-    from openpyxl import Workbook
-    HAS_OPENPYXL = True
-except Exception:
-    Workbook = None
-    HAS_OPENPYXL = False
+    # ===============================================
+    # === CÁC HÀM PHỤ TRỢ (HELPERS)
+    # ===============================================
 
-# -------- Helpers ----------
-DATA_DIR = Path("data")
-REPORTS_DIR = Path("reports")
-DATA_DIR.mkdir(exist_ok=True)
-REPORTS_DIR.mkdir(exist_ok=True)
+    def prompt_for_text(prompt: str, default: Optional[str] = None) -> str:
+        """Hỏi người dùng và trả về chuỗi text đã được làm sạch (strip)."""
+        display_prompt = f"{prompt} [{default}]" if default is not None else prompt
+        value = input(f"{display_prompt}: ").strip()
+        if not value and default is not None:
+            return default
+        return value
 
+    def prompt_for_int(prompt: str, default: Optional[int] = None) -> int:
+        """Hỏi người dùng cho đến khi nhập vào một số nguyên hợp lệ."""
+        while True:
+            try:
+                default_val = str(default) if default is not None else None
+                value_str = prompt_for_text(prompt, default=default_val)
+                if not value_str:
+                    if default is not None: return default
+                    raise ValueError("Giá trị không được để trống.")
+                return int(value_str)
+            except (ValueError, TypeError):
+                print("❌ Vui lòng nhập một số nguyên hợp lệ.")
 
-def fmt_vnd(x: Any) -> str:
-    """Định dạng tiền VND (thô)."""
-    try:
-        v = Decimal(str(x))
-    except Exception:
-        return str(x)
-    # no currency symbol to keep simple
-    return f"{int(v):,}"
+    def prompt_for_decimal(prompt: str, default: Optional[Decimal] = None) -> Decimal:
+        """Hỏi người dùng cho đến khi nhập vào một số Decimal hợp lệ."""
+        while True:
+            try:
+                default_val = str(default) if default is not None else None
+                value_str = prompt_for_text(prompt, default=default_val)
+                if not value_str:
+                    if default is not None: return default
+                    raise ValueError("Giá trị không được để trống.")
+                return Decimal(value_str.replace(",", "."))
+            except (InvalidOperation, ValueError):
+                print("❌ Vui lòng nhập một số hợp lệ (ví dụ: 50000.5).")
 
-
-def status_for_product(p) -> str:
-    if p.stock_quantity <= 0:
-        return "HẾT HÀNG"
-    if p.stock_quantity <= p.min_threshold:
-        return "SẮP HẾT"
-    return "BÌNH THƯỜNG"
-
-
-def print_products_table(products: List[Any]) -> None:
-    if not products:
-        print("(Không có sản phẩm)")
-        return
-    print(f"{'Mã SP':8} {'Tên':30} {'Danh mục':12} {'Giá nhập':>10} {'Giá bán':>10} {'Tồn':>6} {'Ngưỡng':>7} {'Trạng thái':>12}")
-    print("-" * 100)
-    for p in products:
-        print(f"{p.product_id:8} {p.name[:30]:30} {p.category[:12]:12} {fmt_vnd(p.cost_price):>10} {fmt_vnd(p.sell_price):>10} {p.stock_quantity:6} {p.min_threshold:7} {status_for_product(p):>12}")
-    print()
-
-
-# -------- Instantiate managers ----------
-category_mgr = CategoryManager(str(DATA_DIR / "categories.json"))
-product_mgr = ProductManager(str(DATA_DIR / "products.json"), category_mgr=category_mgr)
-transaction_mgr = TransactionManager(str(DATA_DIR / "transactions.csv"), product_mgr)
-
-
-# -------- Report calculators (in-code fallback) ----------
-def sales_summary_month(year: int, month: int) -> Dict[str, Any]:
-    """
-    Tính doanh thu/lợi nhuận/top-seller cho tháng/year.
-    Trả về dict bao gồm totals và breakdown.
-    """
-    # collect export transactions in target month
-    txs = [t for t in transaction_mgr.list_transactions() if t.trans_type == "EXPORT"]
-    # filter by month/year with timezone awareness
-    def in_month(t):
-        dt = getattr(t, "date", None)
-        if dt is None:
-            return False
+    def fmt_vnd(x: Any) -> str:
+        """Định dạng số thành chuỗi tiền tệ VND."""
         try:
-            # convert to VN_TZ naive handling: if tzinfo none assume VN_TZ
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=VN_TZ)
-            local = dt.astimezone(VN_TZ)
+            return f"{int(Decimal(str(x))):,}"
         except Exception:
-            local = dt
-        return local.year == year and local.month == month
+            return str(x)
 
-    txs_month = [t for t in txs if in_month(t)]
-    if not txs_month:
-        return {"year": year, "month": month, "total_revenue": 0, "total_cost": 0, "profit": 0, "by_category": {}, "top_products": []}
+    def status_for_product(p) -> str:
+        """Trả về trạng thái tồn kho của sản phẩm."""
+        if p.stock_quantity <= 0: return "HẾT HÀNG"
+        if p.stock_quantity <= p.min_threshold: return "SẮP HẾT"
+        return "BÌNH THƯỜNG"
 
-    total_revenue = Decimal(0)
-    total_cost = Decimal(0)
-    by_cat: Dict[str, Decimal] = {}
-    per_product: Dict[str, Dict[str, Any]] = {}
+    def print_products_table(products: List[Any]) -> None:
+        """In danh sách sản phẩm ra console dưới dạng bảng."""
+        if not products:
+            print("\n(Không có sản phẩm nào)")
+            return
+        print(
+            f"\n{'Mã SP':<10} {'Tên':<30} {'Danh mục':<15} {'Giá nhập':>12} {'Giá bán':>12} {'Tồn':>6} {'Ngưỡng':>7} {'Trạng thái':>12}")
+        print("-" * 110)
+        for p in products:
+            print(
+                f"{p.product_id:<10} {p.name[:30]:<30} {p.category[:15]:<15} {fmt_vnd(p.cost_price):>12} {fmt_vnd(p.sell_price):>12} {p.stock_quantity:>6} {p.min_threshold:>7} {status_for_product(p):>12}")
+        print()
 
-    for t in txs_month:
-        pid = t.product_id
-        qty = t.quantity
+    def print_transactions_table(transactions: List[Any]) -> None:
+        """In danh sách giao dịch ra console dưới dạng bảng."""
+        if not transactions:
+            print("\n(Không có giao dịch nào)")
+            return
+        print(f"\n{'ID Giao dịch':<38} {'Mã SP':<10} {'Loại':<8} {'Số lượng':>10} {'Ngày':<28} {'Ghi chú'}")
+        print("-" * 120)
+        # Sắp xếp giao dịch theo ngày mới nhất lên đầu
+        for t in sorted(transactions, key=lambda x: x.date, reverse=True):
+            date_str = t.date.astimezone(VN_TZ).strftime('%Y-%m-%d %H:%M:%S') if t.date else 'N/A'
+            print(
+                f"{t.transaction_id:<38} {t.product_id:<10} {t.trans_type:<8} {t.quantity:>10} {date_str:<28} {t.note}")
+        print()
+
+    # ===============================================
+    # === KHỞI TẠO CÁC ĐỐI TƯỢNG QUẢN LÝ (MANAGERS)
+    # ===============================================
+    category_mgr = CategoryManager(str(DATA_DIR / "categories.json"))
+    product_mgr = ProductManager(str(DATA_DIR / "products.json"), category_mgr=category_mgr)
+    transaction_mgr = TransactionManager(str(DATA_DIR / "transactions.csv"), product_mgr=product_mgr)
+
+    # ===============================================
+    # === CÁC HÀM XỬ LÝ TÁC VỤ (ACTION HANDLERS)
+    # ===============================================
+
+    def _handle_add_product():
+        print("\n--- 1.1 Thêm sản phẩm mới ---")
+        try:
+            pid = prompt_for_text("Mã SP")
+            if not pid:
+                print("❗️ Mã SP không được để trống.")
+                return
+            name = prompt_for_text("Tên sản phẩm")
+            cat = prompt_for_text("Danh mục")
+            cost = prompt_for_decimal("Giá nhập", default=Decimal("0"))
+            sell = prompt_for_decimal("Giá bán", default=cost)
+            qty = prompt_for_int("Số lượng tồn", default=0)
+            thr = prompt_for_int("Ngưỡng cảnh báo", default=0)
+            unit = prompt_for_text("Đơn vị", default="cái")
+
+            product_mgr.add_product(pid, name, cat, cost, sell, qty, thr, unit)
+            print("✅ Thêm sản phẩm thành công.")
+        except (ValueError, InvalidOperation) as e:
+            print(f"❌ Lỗi: {e}")
+
+    def _handle_update_product():
+        print("\n--- 1.2 Sửa thông tin sản phẩm ---")
+        pid = prompt_for_text("Mã SP cần sửa")
+        if not pid: return
         try:
             p = product_mgr.get_product(pid)
-        except Exception:
-            # product missing -> skip / or handle
-            continue
-        revenue = Decimal(str(p.sell_price)) * Decimal(qty)
-        cost = Decimal(str(p.cost_price)) * Decimal(qty)
-        total_revenue += revenue
-        total_cost += cost
-        by_cat[p.category] = by_cat.get(p.category, Decimal(0)) + revenue
-        pr = per_product.setdefault(pid, {"name": p.name, "qty": 0, "revenue": Decimal(0)})
-        pr["qty"] += qty
-        pr["revenue"] += revenue
+            print("💡 Để trống và nhấn Enter để giữ nguyên giá trị cũ.")
 
-    profit = total_revenue - total_cost
-    # compute top 5 by qty
-    top_products = sorted(per_product.items(), key=lambda kv: (-kv[1]["qty"], -int(kv[1]["revenue"])))[:5]
-    top_products_formatted = [{"product_id": pid, "name": v["name"], "qty": v["qty"], "revenue": int(v["revenue"])} for pid, v in top_products]
+            changes = {
+                "name": prompt_for_text("Tên", default=p.name),
+                "category": prompt_for_text("Danh mục", default=p.category),
+                "cost_price": prompt_for_decimal("Giá nhập", default=p.cost_price),
+                "sell_price": prompt_for_decimal("Giá bán", default=p.sell_price),
+                "stock_quantity": prompt_for_int("Số lượng tồn", default=p.stock_quantity),
+                "min_threshold": prompt_for_int("Ngưỡng", default=p.min_threshold),
+                "unit": prompt_for_text("Đơn vị", default=p.unit)
+            }
+            product_mgr.update_product(pid, **changes)
+            print("✅ Cập nhật thành công.")
+        except (ValueError, InvalidOperation) as e:
+            print(f"❌ Lỗi: {e}")
 
-    # format by category percentages
-    total_rev_int = int(total_revenue) if total_revenue else 0
-    by_cat_formatted = {}
-    for cat, rev in by_cat.items():
-        by_cat_formatted[cat] = {"revenue": int(rev), "pct": round((int(rev) / total_rev_int * 100), 1) if total_rev_int > 0 else 0.0}
-
-    return {
-        "year": year, "month": month,
-        "total_revenue": int(total_revenue),
-        "total_cost": int(total_cost),
-        "profit": int(profit),
-        "by_category": by_cat_formatted,
-        "top_products": top_products_formatted,
-        "transactions_count": len(txs_month),
-    }
-
-
-def inventory_report_export(out_path_xlsx: Path) -> Path:
-    """
-    Xuất báo cáo inventory. Nếu openpyxl có sẵn xuất xlsx, nếu không xuất CSV.
-    Trả về Path đã ghi.
-    """
-    products = product_mgr.list_products()
-    if not products:
-        raise RuntimeError("Không có sản phẩm để xuất báo cáo tồn kho.")
-
-    out_path_xlsx.parent.mkdir(parents=True, exist_ok=True)
-    if HAS_OPENPYXL:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Inventory"
-        headers = ["product_id", "name", "category", "cost_price", "sell_price", "stock_quantity", "min_threshold", "unit", "created_date", "last_updated"]
-        ws.append(headers)
-        for p in products:
-            ws.append([
-                p.product_id, p.name, p.category, float(p.cost_price), float(p.sell_price),
-                p.stock_quantity, p.min_threshold, p.unit,
-                getattr(p, "created_date", ""), getattr(p, "last_updated", "")
-            ])
-        wb.save(str(out_path_xlsx))
-        return out_path_xlsx
-    else:
-        # fallback CSV
-        out_csv = out_path_xlsx.with_suffix(".csv")
-        import csv as _csv
-        with out_csv.open("w", encoding="utf-8", newline="") as f:
-            writer = _csv.writer(f)
-            writer.writerow(["product_id", "name", "category", "cost_price", "sell_price", "stock_quantity", "min_threshold", "unit", "created_date", "last_updated"])
-            for p in products:
-                writer.writerow([p.product_id, p.name, p.category, p.cost_price, p.sell_price, p.stock_quantity, p.min_threshold, p.unit, getattr(p, "created_date", ""), getattr(p, "last_updated", "")])
-        return out_csv
-
-
-def export_sales_summary_csv(summary: Dict[str, Any], out_path: Path) -> Path:
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    import csv as _csv
-    with out_path.open("w", encoding="utf-8", newline="") as f:
-        writer = _csv.writer(f)
-        writer.writerow(["year", "month", "total_revenue", "total_cost", "profit", "transactions_count"])
-        writer.writerow([summary["year"], summary["month"], summary["total_revenue"], summary["total_cost"], summary["profit"], summary["transactions_count"]])
-        writer.writerow([])
-        writer.writerow(["category", "revenue", "pct"])
-        for cat, info in summary["by_category"].items():
-            writer.writerow([cat, info["revenue"], info["pct"]])
-        writer.writerow([])
-        writer.writerow(["top_products (product_id, name, qty, revenue)"])
-        for p in summary["top_products"]:
-            writer.writerow([p["product_id"], p["name"], p["qty"], p["revenue"]])
-    return out_path
-
-
-def low_stock_alerts_and_export(out_txt: Path, out_csv: Optional[Path] = None, out_xlsx: Optional[Path] = None) -> Dict[str, Any]:
-    """
-    Sinh cảnh báo tồn (dựa vào product_mgr + transaction_mgr)
-    Xuất file text + csv + xlsx (nếu yêu cầu)
-    """
-    # Prefer using generate_low_stock_alerts if exists (centralized logic)
-    if generate_low_stock_alerts is not None:
-        alerts = generate_low_stock_alerts(product_mgr, transaction_mgr, include_out_of_stock=True, include_low_stock=True)
-    else:
-        # fallback simple implementation
-        out_of_stock = []
-        low_stock = []
-        total_needed = 0
-        for p in product_mgr.list_products():
-            need = max(0, p.min_threshold - p.stock_quantity) if p.stock_quantity < p.min_threshold else 0
-            item = {"product_id": p.product_id, "name": p.name, "category": p.category, "stock_quantity": p.stock_quantity, "min_threshold": p.min_threshold, "needed": need}
-            if p.stock_quantity <= 0:
-                out_of_stock.append(item)
-                total_needed += need
-            elif p.stock_quantity <= p.min_threshold:
-                low_stock.append(item)
-                total_needed += need
-        alerts = {"generated_at": datetime.now(VN_TZ).isoformat(), "out_of_stock": out_of_stock, "low_stock": low_stock, "total_needed": total_needed, "by_category": {}}
-
-    # write txt
-    txt = format_alerts_text(alerts) if format_alerts_text else _simple_alerts_text(alerts)
-    out_txt.parent.mkdir(parents=True, exist_ok=True)
-    out_txt.write_text(txt, encoding="utf-8")
-
-    # csv
-    if out_csv:
-        import csv as _csv
-        out_csv.parent.mkdir(parents=True, exist_ok=True)
-        fieldnames = ["type", "product_id", "name", "category", "stock_quantity", "min_threshold", "needed"]
-        with out_csv.open("w", encoding="utf-8", newline="") as f:
-            w = _csv.DictWriter(f, fieldnames=fieldnames)
-            w.writeheader()
-            for item in alerts.get("out_of_stock", []):
-                row = {"type": "OUT_OF_STOCK", **{k: item.get(k, "") for k in ("product_id","name","category","stock_quantity","min_threshold")}, "needed": item.get("needed",0)}
-                w.writerow(row)
-            for item in alerts.get("low_stock", []):
-                row = {"type": "LOW_STOCK", **{k: item.get(k, "") for k in ("product_id","name","category","stock_quantity","min_threshold")}, "needed": item.get("needed",0)}
-                w.writerow(row)
-
-    # xlsx
-    if out_xlsx and HAS_OPENPYXL:
+    def _handle_delete_product():
+        print("\n--- 1.3 Xóa sản phẩm ---")
+        pid = prompt_for_text("Mã SP cần xóa")
+        if not pid: return
         try:
-            export_alerts_xlsx(alerts, str(out_xlsx))
-        except Exception:
-            pass
-
-    return alerts
-
-
-def _simple_alerts_text(alerts):
-    lines = ["========== CẢNH BÁO TỒN KHO ==========", f"Generated at: {alerts.get('generated_at')}",""]
-    def section(title, items):
-        if not items:
-            return [f"{title}: None", ""]
-        s = [f"{title} ({len(items)}):"]
-        for it in items:
-            s.append(f"- {it['product_id']}: {it['name']} ({it['stock_quantity']}/{it['min_threshold']}) cần: {it.get('needed',0)}")
-        s.append("")
-        return s
-    lines += section("HẾT HÀNG", alerts.get("out_of_stock", []))
-    lines += section("SẮP HẾT", alerts.get("low_stock", []))
-    lines.append(f"Tổng cần nhập: {alerts.get('total_needed', 0)}")
-    return "\n".join(lines)
-
-
-# -------- CLI Menus (the requested menu layout) ----------
-def menu_quan_ly_san_pham():
-    while True:
-        print("\n=== 1. QUẢN LÝ SẢN PHẨM ===")
-        print("1.1 Thêm sản phẩm mới")
-        print("1.2 Sửa thông tin sản phẩm")
-        print("1.3 Xóa sản phẩm")
-        print("1.4 Tìm kiếm sản phẩm")
-        print("1.5 Thêm danh mục mới")
-        print("0 Quay lại")
-        c = input("Chọn: ").strip()
-        if c == "1.1":
-            pid = input("Mã SP: ").strip()
-            name = input("Tên sản phẩm: ").strip()
-            cat = input("Danh mục: ").strip()
-            try:
-                cost = Decimal(input("Giá nhập: ").strip() or "0")
-                sell = Decimal(input("Giá bán: ").strip() or "0")
-                qty = int(input("Số lượng tồn: ").strip() or "0")
-                thr = int(input("Ngưỡng cảnh báo: ").strip() or "0")
-            except Exception as e:
-                print("Dữ liệu số không hợp lệ:", e); continue
-            unit = input("Đơn vị: ").strip() or "cái"
-            try:
-                product_mgr.add_product(pid, name, cat, cost, sell, qty, thr, unit)
-                print("Thêm thành công.")
-            except Exception as e:
-                print("Lỗi:", e)
-        elif c == "1.2":
-            pid = input("Mã SP cần sửa: ").strip()
-            try:
-                p = product_mgr.get_product(pid)
-            except Exception as e:
-                print("Không tìm thấy:", e); continue
-            print("Để trống để giữ nguyên.")
-            name = input(f"Tên [{p.name}]: ").strip() or p.name
-            cat = input(f"Danh mục [{p.category}]: ").strip() or p.category
-            cost = input(f"Giá nhập [{p.cost_price}]: ").strip() or str(p.cost_price)
-            sell = input(f"Giá bán [{p.sell_price}]: ").strip() or str(p.sell_price)
-            qty = input(f"Tồn [{p.stock_quantity}]: ").strip() or str(p.stock_quantity)
-            thr = input(f"Ngưỡng [{p.min_threshold}]: ").strip() or str(p.min_threshold)
-            unit = input(f"Đơn vị [{p.unit}]: ").strip() or p.unit
-            try:
-                changes = {"name": name, "category": cat, "cost_price": cost, "sell_price": sell, "stock_quantity": int(qty), "min_threshold": int(thr), "unit": unit}
-                product_mgr.update_product(pid, **changes)
-                print("Cập nhật thành công.")
-            except Exception as e:
-                print("Lỗi:", e)
-        elif c == "1.3":
-            pid = input("Mã SP cần xóa: ").strip()
-            try:
+            # Thêm bước xác nhận để an toàn
+            confirm = prompt_for_text(f"Bạn có chắc muốn xóa sản phẩm '{pid}'? (y/n)", default='n')
+            if confirm.lower() == 'y':
                 product_mgr.delete_product(pid)
-                print("Xóa thành công.")
-            except Exception as e:
-                print("Lỗi:", e)
-        elif c == "1.4":
-            kw = input("Tìm kiếm (mã/tên/danh mục): ").strip()
-            field = input("Trường (product_id/name/category) [name]: ").strip() or "name"
-            try:
-                results = product_mgr.search_products(kw, field=field)
-                print_products_table(results)
-            except Exception as e:
-                print("Lỗi:", e)
-        elif c == "1.5":
-            cat = input("Tên danh mục mới: ").strip()
-            try:
-                category_mgr.add_category(cat)
-                print("Thêm danh mục thành công.")
-            except Exception as e:
-                print("Lỗi:", e)
-        elif c == "0":
-            break
-        else:
-            print("Lựa chọn không hợp lệ.")
-
-
-def menu_nhap_xuat_kho():
-    while True:
-        print("\n=== 2. NHẬP/XUẤT KHO ===")
-        print("2.1 Nhập kho")
-        print("2.2 Xuất kho (bán hàng)")
-        print("2.3 Lịch sử giao dịch")
-        print("0 Quay lại")
-        c = input("Chọn: ").strip()
-        if c == "2.1":
-            pid = input("Mã SP: ").strip()
-            qty = int(input("Số lượng nhập: ").strip() or "0")
-            note = input("Ghi chú: ").strip()
-            try:
-                transaction_mgr.add_transaction(pid, "IMPORT", qty, note=note)
-                print("Nhập kho thành công.")
-            except Exception as e:
-                print("Lỗi:", e)
-        elif c == "2.2":
-            pid = input("Mã SP: ").strip()
-            qty = int(input("Số lượng xuất: ").strip() or "0")
-            note = input("Ghi chú: ").strip()
-            try:
-                transaction_mgr.add_transaction(pid, "EXPORT", qty, note=note)
-                print("Xuất kho thành công.")
-            except Exception as e:
-                print("Lỗi:", e)
-        elif c == "2.3":
-            txs = transaction_mgr.list_transactions()
-            if not txs:
-                print("Không có giao dịch.")
+                print(f"✅ Đã xóa sản phẩm '{pid}'.")
             else:
-                print("ID | SP | Loại | Số lượng | Ngày | Ghi chú")
-                for t in txs:
-                    print(f"{t.transaction_id} | {t.product_id} | {t.trans_type} | {t.quantity} | {getattr(t,'date','')} | {t.note}")
-        elif c == "0":
-            break
-        else:
-            print("Lựa chọn không hợp lệ.")
+                print("Hủy thao tác xóa.")
+        except ValueError as e:
+            print(f"❌ Lỗi: {e}")
 
+    def _handle_search_product():
+        print("\n--- 1.4 Tìm kiếm sản phẩm ---")
+        kw = prompt_for_text("Nhập từ khóa (mã/tên/danh mục)")
+        if not kw: return
+        field = prompt_for_text("Tìm theo trường (product_id/name/category)", "name")
+        try:
+            results = product_mgr.search_products(kw, field=field)
+            print_products_table(results)
+        except ValueError as e:
+            print(f"❌ Lỗi: {e}")
 
-def menu_bao_cao_thong_ke():
-    while True:
-        print("\n=== 3. BÁO CÁO VÀ THỐNG KÊ ===")
-        print("3.1 Danh sách tồn kho")
-        print("3.2 Cảnh báo hết hàng")
-        print("3.3 Báo cáo doanh thu (theo tháng)")
-        print("3.4 Top sản phẩm bán chạy")
-        print("0 Quay lại")
-        c = input("Chọn: ").strip()
-        if c == "3.1":
-            prods = product_mgr.list_products()
-            print_products_table(prods)
-        elif c == "3.2":
-            out_txt = REPORTS_DIR / "low_stock_alert.txt"
-            out_csv = REPORTS_DIR / "low_stock_alert.csv"
-            out_xlsx = REPORTS_DIR / "low_stock_alert.xlsx" if HAS_OPENPYXL else None
-            alerts = low_stock_alerts_and_export(out_txt, out_csv, out_xlsx)
-            print("Cảnh báo (tóm tắt):")
-            if alerts.get("out_of_stock") or alerts.get("low_stock"):
-                print((format_alerts_text(alerts) if format_alerts_text else _simple_alerts_text(alerts)))
+    def _handle_add_category():
+        print("\n--- 1.5 Thêm danh mục mới ---")
+        cat_name = prompt_for_text("Tên danh mục mới")
+        if not cat_name: return
+        try:
+            category_mgr.add_category(cat_name)
+            print(f"✅ Thêm danh mục '{cat_name}' thành công.")
+        except ValueError as e:
+            print(f"❌ Lỗi: {e}")
+
+    def _handle_transaction(trans_type: str):
+        is_import = trans_type.upper() == "IMPORT"
+        action_text = "nhập" if is_import else "xuất"
+        print(f"\n--- 2.{1 if is_import else 2} {action_text.capitalize()} kho ---")
+        pid = prompt_for_text("Mã SP")
+        if not pid: return
+        try:
+            product_mgr.get_product(pid)  # Kiểm tra SP tồn tại
+            qty = prompt_for_int(f"Số lượng {action_text}")
+            if qty <= 0:
+                print("❗️ Số lượng phải lớn hơn 0.")
+                return
+            note = prompt_for_text("Ghi chú (tùy chọn)", default="")
+            transaction_mgr.add_transaction(pid, trans_type.upper(), qty, note=note)
+            print(f"✅ {action_text.capitalize()} kho thành công.")
+        except ValueError as e:
+            print(f"❌ Lỗi: {e}")
+
+    # ===============================================
+    # === CÁC MENU CHỨC NĂNG
+    # ===============================================
+
+    def menu_quan_ly_san_pham():
+        menu_map = {
+            "1": ("Thêm sản phẩm mới", _handle_add_product),
+            "2": ("Sửa thông tin sản phẩm", _handle_update_product),
+            "3": ("Xóa sản phẩm", _handle_delete_product),
+            "4": ("Tìm kiếm sản phẩm", _handle_search_product),
+            "5": ("Thêm danh mục mới", _handle_add_category),
+            "0": ("Quay lại", None)
+        }
+        while True:
+            print("\n=== 1. QUẢN LÝ SẢN PHẨM ===")
+            for key, (text, _) in menu_map.items(): print(f"{key}. {text}")
+            choice = input("Chọn: ").strip()
+            if choice == "0": break
+            action = menu_map.get(choice)
+            if action and action[1]:
+                action[1]()
             else:
-                print("Không có sản phẩm dưới ngưỡng.")
-            print("Files exported to:", out_txt, out_csv, out_xlsx)
-        elif c == "3.3":
-            y = int(input("Năm (YYYY): ").strip() or str(datetime.now().year))
-            m = int(input("Tháng (1-12): ").strip() or str(datetime.now().month))
-            if compute_financial_summary:
-                summary = compute_financial_summary(product_mgr, transaction_mgr, month=m, year=y, out_dir=REPORTS_DIR,
-                                                    currency="VND")
-                print(format_financial_summary_text(summary))
-                print(f"➡️ Đã xuất file: {REPORTS_DIR}/sales_summary_{m:02d}_{y}.csv")
+                print("❗️ Lựa chọn không hợp lệ.")
+
+    def menu_nhap_xuat_kho():
+        while True:
+            print("\n=== 2. NHẬP/XUẤT KHO ===")
+            print("1. Nhập kho")
+            print("2. Xuất kho (bán hàng)")
+            print("3. Lịch sử giao dịch")
+            print("0. Quay lại")
+            c = input("Chọn: ").strip()
+            if c == "1":
+                _handle_transaction("IMPORT")
+            elif c == "2":
+                _handle_transaction("EXPORT")
+            elif c == "3":
+                print_transactions_table(transaction_mgr.list_transactions())
+            elif c == "0":
+                break
             else:
-                summary = sales_summary_month(y, m)
-                print(f"Doanh thu: {fmt_vnd(summary['total_revenue'])} VND")
+                print("❗️ Lựa chọn không hợp lệ.")
 
-        elif c == "3.4":
-            y = int(input("Năm (YYYY) [blank = hiện tại]: ") or datetime.now().year)
-            m = int(input("Tháng (1-12) [blank = hiện tại]: ") or datetime.now().month)
-            if compute_financial_summary:
-                summary = compute_financial_summary(product_mgr, transaction_mgr, month=m, year=y, out_dir=REPORTS_DIR, currency="VND")
-                if not summary["top_sellers"]:
-                    print("Không có dữ liệu bán hàng.")
-                else:
-                    for i, p in enumerate(summary["top_sellers"], 1):
-                        print(f"{i}. {p['name']} ({p['category']}) "
-                            f"- SL {p['quantity_sold']} | Doanh thu {fmt_vnd(p['revenue'])} | Lợi nhuận {fmt_vnd(p['profit'])}")
+    def menu_bao_cao_thong_ke():
+        while True:
+            print("\n=== 3. BÁO CÁO VÀ THỐNG KÊ ===")
+            print("1. Xem danh sách tồn kho")
+            print("2. Xem cảnh báo hết hàng/sắp hết hàng")
+            print("3. Xem báo cáo doanh thu theo tháng")
+            print("0. Quay lại")
+            c = input("Chọn: ").strip()
+            if c == "1":
+                print_products_table(product_mgr.list_products())
+            elif c == "2":
+                alerts = generate_low_stock_alerts(product_mgr, transaction_mgr)
+                print(format_alerts_text(alerts))
+                if HAS_OPENPYXL and input("Bạn có muốn xuất file Excel chi tiết không? (y/n): ").lower() == 'y':
+                    try:
+                        out_path = REPORTS_DIR / f"low_stock_alert_{datetime.now().strftime('%Y%m%d')}.xlsx"
+                        export_alerts_xlsx(alerts, str(out_path))
+                        print(f"✅ Đã xuất báo cáo ra file: {out_path}")
+                    except Exception as e:
+                        print(f"❌ Lỗi khi xuất file: {e}")
+            elif c == "3":
+                now = datetime.now(VN_TZ)
+                y = prompt_for_int("Nhập năm (YYYY)", default=now.year)
+                m = prompt_for_int("Nhập tháng (1-12)", default=now.month)
+                try:
+                    summary = compute_financial_summary(product_mgr, transaction_mgr, month=m, year=y,
+                                                        out_dir=REPORTS_DIR)
+                    print(format_financial_summary_text(summary))
+                    print(f"✅ Đã xuất file chi tiết: {REPORTS_DIR}/sales_summary_{m:02d}_{y}.csv")
+                except Exception as e:
+                    print(f"❌ Lỗi khi tạo báo cáo: {e}")
+            elif c == "0":
+                break
             else:
-                summary = sales_summary_month(y, m)
-                for i, p in enumerate(summary.get("top_products", []), 1):
-                    print(f"{i}. {p['name']} ({p['qty']} cái) - Doanh thu {fmt_vnd(p['revenue'])} VND")
+                print("❗️ Lựa chọn không hợp lệ.")
 
-        elif c == "0":
-            break
-        else:
-            print("Lựa chọn không hợp lệ.")
+    def menu_xuat_du_lieu():
+        print("\n=== 4. XUẤT DỮ LIỆU ===")
+        try:
+            p_out = prompt_for_text("Đường dẫn xuất file sản phẩm (json/csv)",
+                                    str(REPORTS_DIR / "products_export.json"))
+            if Path(p_out).suffix == '.csv':
+                product_mgr.export_csv(p_out)
+            else:
+                product_mgr.export_json(p_out)
 
+            t_out = prompt_for_text("Đường dẫn xuất file giao dịch (csv)", str(REPORTS_DIR / "transactions_export.csv"))
+            transaction_mgr.export_transactions(t_out)
 
-def menu_xuat_du_lieu():
-    print("\n=== 4. XUẤT DỮ LIỆU ===")
-    p_out = input("Path xuất products (json/csv) [reports/products_export.json]: ").strip() or str(REPORTS_DIR / "products_export.json")
-    t_out = input("Path xuất transactions (csv/json) [reports/transactions_export.csv]: ").strip() or str(REPORTS_DIR / "transactions_export.csv")
-    try:
-        product_mgr.export_json(p_out)
-        transaction_mgr.export_transactions(t_out)
-        print("Đã xuất files:", p_out, t_out)
-    except Exception as e:
-        print("Lỗi xuất dữ liệu:", e)
+            print(f"✅ Đã xuất dữ liệu ra các file:\n- {p_out}\n- {t_out}")
+        except Exception as e:
+            print(f"❌ Lỗi xuất dữ liệu: {e}")
 
+    # ===============================================
+    # === HÀM MAIN (ĐIỂM BẮT ĐẦU CỦA APP)
+    # ===============================================
+    def main():
+        menu_map = {
+            "1": ("Quản lý sản phẩm", menu_quan_ly_san_pham),
+            "2": ("Nhập/Xuất kho", menu_nhap_xuat_kho),
+            "3": ("Báo cáo và thống kê", menu_bao_cao_thong_ke),
+            "4": ("Xuất dữ liệu", menu_xuat_du_lieu),
+            "5": ("Thoát", None)
+        }
+        while True:
+            print("\n========== 📦 QUẢN LÝ KHO HÀNG MINI-MART 📦 ==========")
+            for key, (text, _) in menu_map.items():
+                print(f"{key}. {text}")
 
-def main():
-    while True:
-        print("\n========== QUẢN LÝ KHO HÀNG ==========")
-        print("1. Quản lý sản phẩm")
-        print("2. Nhập/Xuất kho")
-        print("3. Báo cáo và thống kê")
-        print("4. Xuất dữ liệu")
-        print("5. Thoát")
-        ch = input("Chọn: ").strip()
-        if ch == "1":
-            menu_quan_ly_san_pham()
-        elif ch == "2":
-            menu_nhap_xuat_kho()
-        elif ch == "3":
-            menu_bao_cao_thong_ke()
-        elif ch == "4":
-            menu_xuat_du_lieu()
-        elif ch == "5":
-            print("Kết thúc.")
-            break
-        else:
-            print("Lựa chọn không hợp lệ.")
+            choice = input("Chọn chức năng: ").strip()
 
-if __name__ == "__main__":
+            if choice == "5":
+                print("👋 Tạm biệt!")
+                break
+
+            action = menu_map.get(choice)
+            if action and action[1]:
+                action[1]()
+            else:
+                print("❗️ Lựa chọn không hợp lệ. Vui lòng chọn từ 1 đến 5.")
+
+    # --- Chạy ứng dụng ---
     main()
+
+
+# ===============================================
+# === ENTRY POINT CỦA SCRIPT
+# ===============================================
+if __name__ == "__main__":
+    try:
+        # Bước 1: Kiểm tra các module cần thiết có thể được import không
+        from src.inventory.product_manager import ProductManager
+        from src.inventory.category_manager import CategoryManager
+        from src.sales.transaction_manager import TransactionManager
+        from src.report_and_sreach.report import generate_low_stock_alerts
+        from src.utils.time_zone import VN_TZ
+
+        # Bước 2: Nếu tất cả import thành công, gọi hàm để chạy toàn bộ ứng dụng
+        run_cli_app()
+
+    except ImportError:
+        print("❌ LỖI NGHIÊM TRỌNG: KHÔNG TÌM THẤY MODULE CỦA DỰ ÁN.")
+        print("Vui lòng đảm bảo bạn đang chạy script này từ thư mục gốc (root) của dự án.")
+        print("Ví dụ: python -m src.cli.cli_vn")
+        # In ra lỗi chi tiết để gỡ lỗi
+        traceback.print_exc()
+        sys.exit(1)
+    except Exception as e:
+        print(f"💥 Đã xảy ra một lỗi không mong muốn: {e}")
+        traceback.print_exc()
+        sys.exit(1)
