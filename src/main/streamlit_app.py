@@ -78,8 +78,10 @@ def get_managers():
     category_mgr = CategoryManager(str(DATA_DIR / "categories.json"))
     product_mgr = ProductManager(str(DATA_DIR / "products.json"), category_mgr=category_mgr)
     transaction_mgr = TransactionManager(str(DATA_DIR / "transactions.csv"), product_mgr=product_mgr)
-    return category_mgr, product_mgr, transaction_mgr
-
+    # Khởi tạo SearchEngine và cache lại
+    search_engine = SearchEngine(product_mgr, transaction_mgr)
+    # Trả về 4 đối tượng thay vì 3
+    return category_mgr, product_mgr, transaction_mgr, search_engine
 
 cm, pm, tm, se = get_managers()
 
