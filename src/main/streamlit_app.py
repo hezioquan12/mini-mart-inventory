@@ -25,6 +25,7 @@ try:
     from src.inventory.category_manager import CategoryManager
     from src.inventory.product_manager import ProductManager
     from src.sales.transaction_manager import TransactionManager
+    from src.report_and_sreach.sreach import SearchEngine
     from src.report_and_sreach.report import (
         generate_low_stock_alerts,
         format_alerts_text,
@@ -80,7 +81,7 @@ def get_managers():
     return category_mgr, product_mgr, transaction_mgr
 
 
-cm, pm, tm = get_managers()
+cm, pm, tm, se = get_managers()
 
 
 def fmt_vnd(v):
@@ -151,15 +152,43 @@ if menu == "📊 Tổng quan":
 elif menu == "📦 Quản lý Sản phẩm":
     st.title("📦 Quản lý Sản phẩm")
 
-    tab_list, tab_add, tab_delete = st.tabs(["📜 Danh sách", "➕ Thêm mới", "❌ Xóa"])
+    # Đổi tên tab đầu tiên để bao gồm cả Tìm kiếm
+    tab_list_search, tab_add, tab_delete = st.tabs(["📜 Danh sách & Tìm kiếm", "➕ Thêm mới", "❌ Xóa"])
 
-    with tab_list:
-        st.subheader("Toàn bộ sản phẩm trong kho")
-        products_df = pd.DataFrame([p.to_dict() for p in pm.list_products()])
-        # Áp dụng Việt hóa trước khi hiển thị
-        st.dataframe(products_df.rename(columns=COLUMN_TRANSLATIONS), use_container_width=True, hide_index=True)
+    with tab_list_search:
+        st.subheader("Xem toàn bộ hoặc tìm kiếm sản phẩm")
+
+        # Thêm ô tìm kiếm
+        keyword = st.text_input(
+            "Nhập Mã SP, Tên, hoặc Danh mục để tìm kiếm:",
+            placeholder="Ví dụ: Bánh mì, SP001, Thực phẩm..."
+        )
+
+        # Logic hiển thị danh sách dựa trên từ khóa
+        if keyword:
+            # Sử dụng SearchEngine để có kết quả tốt nhất
+            search_results = se.search_products(keyword, fuzzy=True)
+            st.write(f"Tìm thấy **{search_results['total']}** kết quả cho từ khóa **'{keyword}'**.")
+            products_to_display = search_results['results']
+        else:
+            # Nếu không có từ khóa, hiển thị toàn bộ
+            products_to_display = pm.list_products()
+
+        # Hiển thị bảng kết quả
+        if products_to_display:
+            # Cần chuẩn hóa vì kết quả từ search engine là dict, từ product manager là object
+            products_as_dicts = [p if isinstance(p, dict) else p.to_dict() for p in products_to_display]
+            products_df = pd.DataFrame(products_as_dicts)
+            st.dataframe(products_df.rename(columns=COLUMN_TRANSLATIONS), use_container_width=True, hide_index=True)
+        else:
+            # Chỉ thông báo không có kết quả khi người dùng đã tìm kiếm
+            if keyword:
+                st.info("Không tìm thấy sản phẩm nào phù hợp.")
+            else:
+                st.info("Chưa có sản phẩm nào trong kho.")
 
     with tab_add:
+        # ... (code của tab Thêm mới giữ nguyên)
         st.subheader("Thêm sản phẩm mới")
         with st.form("add_product_form"):
             pid = st.text_input("Mã SP (product_id)")
@@ -172,7 +201,6 @@ elif menu == "📦 Quản lý Sản phẩm":
             c3, c4 = st.columns(2)
             qty = c3.number_input("Tồn kho ban đầu", min_value=0, step=1)
             thr = c4.number_input("Ngưỡng cảnh báo", min_value=0, step=1)
-
             submitted = st.form_submit_button("Thêm sản phẩm")
             if submitted:
                 try:
@@ -183,6 +211,7 @@ elif menu == "📦 Quản lý Sản phẩm":
                     st.error(f"Lỗi: {e}")
 
     with tab_delete:
+        # ... (code của tab Xóa giữ nguyên)
         st.subheader("Xóa sản phẩm")
         all_pids = [p.product_id for p in pm.list_products()]
         pid_to_delete = st.selectbox("Chọn sản phẩm cần xóa", options=all_pids)
