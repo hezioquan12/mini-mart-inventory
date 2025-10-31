@@ -1,9 +1,0 @@
-[
-    {
-        "transaction_id": "T27b9ba7504cd46ce99d7669df5d3a1fc",
-        "product_id": "SP01",
-        "trans_type": "EXPORT",
-        "quantity": 3,
-        "note": "Test transaction"
-    }
-]

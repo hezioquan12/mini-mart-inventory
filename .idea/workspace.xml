@@ -4,7 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="cải thiện cli" />
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="cải thiện cli">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_test_products.json" beforeDir="false" afterPath="$PROJECT_DIR$/data_test_products.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/data_test/products.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/data_test/transaction_log.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/data_test/transactions.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/test_export_report.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/test_exports/low_stock.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/test_exports/low_stock.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/test_exports/low_stock.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/test_exports/transactions.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/test_exports/transactions.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/cli.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -248,7 +261,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759925080399</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="cải thiện cli">
+      <option name="closed" value="true" />
+      <created>1759925215114</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1759925215114</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="UnknownFeatures">

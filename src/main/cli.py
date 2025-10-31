@@ -44,8 +44,18 @@ def run_cli_app():
         HAS_OPENPYXL = False
 
     # --- Cấu hình đường dẫn ---
-    DATA_DIR = Path("data")
-    REPORTS_DIR = Path("reports")
+
+    # Lấy thư mục gốc của dự án (đi lên 2 cấp từ file .py hiện tại)
+    # Path(__file__) -> .../project_root/main/app.py
+    # .parent        -> .../project_root/main
+    # .parent        -> .../project_root
+    project_root = Path(__file__).parent.parent.parent
+
+    # Định nghĩa đường dẫn dựa trên thư mục gốc
+    DATA_DIR = project_root / "data"
+    REPORTS_DIR = project_root / "reports"
+
+    # Tạo thư mục (nếu chưa có)
     DATA_DIR.mkdir(exist_ok=True)
     REPORTS_DIR.mkdir(exist_ok=True)
 
@@ -318,12 +328,20 @@ def run_cli_app():
         try:
             p_out = prompt_for_text("Đường dẫn xuất file sản phẩm (json/csv)",
                                     str(REPORTS_DIR / "products_export.json"))
+
+            # === DÒNG QUAN TRỌNG: Đảm bảo thư mục tồn tại ===
+            Path(p_out).parent.mkdir(parents=True, exist_ok=True)
+
             if Path(p_out).suffix == '.csv':
                 product_mgr.export_csv(p_out)
             else:
                 product_mgr.export_json(p_out)
 
             t_out = prompt_for_text("Đường dẫn xuất file giao dịch (csv)", str(REPORTS_DIR / "transactions_export.csv"))
+
+            # === DÒNG QUAN TRỌNG: Đảm bảo thư mục tồn tại ===
+            Path(t_out).parent.mkdir(parents=True, exist_ok=True)
+
             transaction_mgr.export_transactions(t_out)
 
             print(f"✅ Đã xuất dữ liệu ra các file:\n- {p_out}\n- {t_out}")

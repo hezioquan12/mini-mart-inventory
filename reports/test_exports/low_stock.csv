@@ -1,2 +1,0 @@
-product_id,name,category,stock_quantity,min_threshold,unit,needed,type,daily_sale_rate,days_until_stockout,predicted_out_soon
-SP01,Sữa Vinamilk,Đồ uống,2,20,hộp,23,LOW_STOCK,0.1,20.0,False
