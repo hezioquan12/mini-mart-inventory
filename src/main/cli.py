@@ -16,7 +16,7 @@ import traceback
 from pathlib import Path
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any
 
 
 def run_cli_app():
@@ -44,12 +44,12 @@ def run_cli_app():
         HAS_OPENPYXL = False
 
     # --- Cấu hình đường dẫn ---
-
-    # Lấy thư mục gốc của dự án (đi lên 2 cấp từ file .py hiện tại)
+    current_file_path = Path(__file__).resolve()
+    # Lấy thư mục gốc của dự án (đi lên 3 cấp từ file .py hiện tại)
     # Path(__file__) -> .../project_root/main/app.py
     # .parent        -> .../project_root/main
     # .parent        -> .../project_root
-    project_root = Path(__file__).parent.parent.parent
+    project_root = current_file_path.parent.parent.parent
 
     # Định nghĩa đường dẫn dựa trên thư mục gốc
     DATA_DIR = project_root / "data"
@@ -299,14 +299,30 @@ def run_cli_app():
                 print_products_table(product_mgr.list_products())
             elif c == "2":
                 alerts = generate_low_stock_alerts(product_mgr, transaction_mgr)
-                print(format_alerts_text(alerts))
+                formatted_text = format_alerts_text(alerts)
+                print(formatted_text)
+                try:
+                    # Tạo tên file duy nhất (thêm cả giờ phút giây)
+                    now_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    out_txt_path = REPORTS_DIR / f"low_stock_alert_{now_str}.txt"
+
+                    # Đảm bảo thư mục reports tồn tại (an toàn hơn)
+                    REPORTS_DIR.mkdir(exist_ok=True)
+
+                    # Ghi file với encoding UTF-8 (quan trọng cho tiếng Việt)
+                    with open(out_txt_path, "w", encoding="utf-8") as f:
+                        f.write(formatted_text)
+                    print(f"✅ Đã tự động lưu báo cáo (TXT) ra file: {out_txt_path}")
+                except Exception as e:
+                    print(f"❌ Lỗi khi xuất file TXT: {e}")
                 if HAS_OPENPYXL and input("Bạn có muốn xuất file Excel chi tiết không? (y/n): ").lower() == 'y':
                     try:
-                        out_path = REPORTS_DIR / f"low_stock_alert_{datetime.now().strftime('%Y%m%d')}.xlsx"
+                        # Sử dụng cùng timestamp để 2 file (txt, xlsx) khớp tên nhau
+                        out_path = REPORTS_DIR / f"low_stock_alert_{now_str}.xlsx"
                         export_alerts_xlsx(alerts, str(out_path))
-                        print(f"✅ Đã xuất báo cáo ra file: {out_path}")
+                        print(f"✅ Đã xuất báo cáo (Excel) ra file: {out_path}")
                     except Exception as e:
-                        print(f"❌ Lỗi khi xuất file: {e}")
+                        print(f"❌ Lỗi khi xuất file Excel: {e}")
             elif c == "3":
                 now = datetime.now(VN_TZ)
                 y = prompt_for_int("Nhập năm (YYYY)", default=now.year)

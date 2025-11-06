@@ -5,11 +5,11 @@
     "category": "Misc",
     "cost_price": "100",
     "sell_price": "120",
-    "stock_quantity": 9,
+    "stock_quantity": 2,
     "min_threshold": 2,
     "unit": "cái",
     "created_date": "2025-10-03T13:57:02.181733+07:00",
-    "last_updated": "2025-10-03T20:00:18.891857+07:00"
+    "last_updated": "2025-11-06T20:39:00.145751+07:00"
   },
   {
     "product_id": "T2",
