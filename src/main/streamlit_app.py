@@ -45,8 +45,9 @@ except ImportError as e:
     st.stop()
 
 # --- Cấu hình và khởi tạo các đối tượng quản lý ---
-DATA_DIR = Path("data")
-REPORTS_DIR = Path("reports")
+PROJECT_ROOT_PATH = Path(PROJECT_ROOT)
+DATA_DIR = PROJECT_ROOT_PATH / "data"
+REPORTS_DIR = PROJECT_ROOT_PATH / "reports"
 DATA_DIR.mkdir(exist_ok=True)
 REPORTS_DIR.mkdir(exist_ok=True)
 
