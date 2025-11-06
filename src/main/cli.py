@@ -33,8 +33,10 @@ def run_cli_app():
         export_alerts_xlsx,
         format_alerts_text,
         compute_financial_summary,
-        format_financial_summary_text
+        format_financial_summary_text,
+        calculate_import_quantity
     )
+    from src.report_and_sreach.sreach import SearchEngine
     from src.utils.time_zone import VN_TZ
 
     try:
@@ -143,7 +145,7 @@ def run_cli_app():
     category_mgr = CategoryManager(str(DATA_DIR / "categories.json"))
     product_mgr = ProductManager(str(DATA_DIR / "products.json"), category_mgr=category_mgr)
     transaction_mgr = TransactionManager(str(DATA_DIR / "transactions.csv"), product_mgr=product_mgr)
-
+    search_engine = SearchEngine(product_mgr, transaction_mgr)
     # ===============================================
     # === CÁC HÀM XỬ LÝ TÁC VỤ (ACTION HANDLERS)
     # ===============================================
@@ -168,6 +170,43 @@ def run_cli_app():
         except (ValueError, InvalidOperation) as e:
             print(f"❌ Lỗi: {e}")
 
+    def _handle_suggest_reorder():
+        """
+        Gợi ý số lượng nhập hàng thông minh cho một sản phẩm.
+        Sử dụng hàm calculate_import_quantity từ report.py.
+        """
+        print("\n--- 1.6 Gợi ý số lượng nhập hàng---")
+        pid = prompt_for_text("Mã SP cần gợi ý")
+        if not pid: return
+
+        try:
+            product = product_mgr.get_product(pid)
+            transactions = transaction_mgr.list_transactions()
+            print("...Đang phân tích lịch sử bán hàng...")
+            days_history = 30  # Phân tích 30 ngày qua
+            lead_time = 7  # Thời gian chờ hàng về là 7 ngày
+
+            suggested_qty = calculate_import_quantity(
+                product,
+                transactions,
+                days=days_history,
+                lead_time=lead_time
+            )
+
+            print("\n--- 💡 KẾT QUẢ GỢI Ý 💡 ---")
+            print(f"Sản phẩm: {product.name} (ID: {product.product_id})")
+            print(f"Tồn kho hiện tại: {product.stock_quantity}")
+            print(f"Ngưỡng tối thiểu: {product.min_threshold}")
+            print(f"Phân tích dựa trên: {days_history} ngày qua, Thời gian chờ hàng: {lead_time} ngày.")
+            print("-" * 30)
+            print(f"👉 Số lượng gợi ý nhập: {suggested_qty} {product.unit}")
+            print("\n(Lưu ý: Con số này dựa trên TB bán hàng và độ lệch chuẩn, "
+                  "để đảm bảo 95% không hết hàng trong 7 ngày tới.)")
+
+        except ValueError as e:
+            print(f"❌ Lỗi: {e} (Không tìm thấy sản phẩm?)")
+        except Exception as e:
+            print(f"❌ Lỗi bất ngờ khi tính toán: {e}")
     def _handle_update_product():
         print("\n--- 1.2 Sửa thông tin sản phẩm ---")
         pid = prompt_for_text("Mã SP cần sửa")
@@ -206,13 +245,30 @@ def run_cli_app():
             print(f"❌ Lỗi: {e}")
 
     def _handle_search_product():
-        print("\n--- 1.4 Tìm kiếm sản phẩm ---")
+        print("\n--- 1.4 Tìm kiếm sản phẩm---")
         kw = prompt_for_text("Nhập từ khóa (mã/tên/danh mục)")
         if not kw: return
-        field = prompt_for_text("Tìm theo trường (product_id/name/category)", "name")
+        field = prompt_for_text("Tìm theo trường (product_id/name/category/all)", "all")
+        field_lookup = None if field.lower() == "all" else field
         try:
-            results = product_mgr.search_products(kw, field=field)
-            print_products_table(results)
+            # Sử dụng SearchEngine
+            response = search_engine.search_products(
+                keyword=kw,
+                field=field_lookup,
+                page=1,
+                per_page=50  # Hiển thị 50 kết quả đầu tiên
+            )
+            product_ids = [p['product_id'] for p in response.get("results", [])]
+            products_list = [product_mgr.get_product(pid) for pid in product_ids if product_mgr.product_exists(pid)]
+            print_products_table(products_list)  # Dùng hàm in bảng cũ
+            print(f"\n--- (Tìm thấy tổng cộng {response.get('total', 0)} kết quả) ---")
+
+            facets = response.get("facets", {})
+            if facets:
+                print("Phân loại theo danh mục (trong kết quả):")
+                for cat, count in facets.items():
+                    print(f"  - {cat}: {count} SP")
+
         except ValueError as e:
             print(f"❌ Lỗi: {e}")
 
@@ -255,6 +311,7 @@ def run_cli_app():
             "3": ("Xóa sản phẩm", _handle_delete_product),
             "4": ("Tìm kiếm sản phẩm", _handle_search_product),
             "5": ("Thêm danh mục mới", _handle_add_category),
+            "6": ("Gợi ý nhập hàng", _handle_suggest_reorder),
             "0": ("Quay lại", None)
         }
         while True:
@@ -292,7 +349,7 @@ def run_cli_app():
             print("\n=== 3. BÁO CÁO VÀ THỐNG KÊ ===")
             print("1. Xem danh sách tồn kho")
             print("2. Xem cảnh báo hết hàng/sắp hết hàng")
-            print("3. Xem báo cáo doanh thu theo tháng")
+            print("3. Xem báo cáo doanh thu theo tháng và top bán chạy")
             print("0. Quay lại")
             c = input("Chọn: ").strip()
             if c == "1":
@@ -309,7 +366,7 @@ def run_cli_app():
                     # Đảm bảo thư mục reports tồn tại (an toàn hơn)
                     REPORTS_DIR.mkdir(exist_ok=True)
 
-                    # Ghi file với encoding UTF-8 (quan trọng cho tiếng Việt)
+                    # Ghi file với encoding UTF-8
                     with open(out_txt_path, "w", encoding="utf-8") as f:
                         f.write(formatted_text)
                     print(f"✅ Đã tự động lưu báo cáo (TXT) ra file: {out_txt_path}")
@@ -328,9 +385,16 @@ def run_cli_app():
                 y = prompt_for_int("Nhập năm (YYYY)", default=now.year)
                 m = prompt_for_int("Nhập tháng (1-12)", default=now.month)
                 try:
-                    summary = compute_financial_summary(product_mgr, transaction_mgr, month=m, year=y,
-                                                        out_dir=REPORTS_DIR)
+                    summary = compute_financial_summary(
+                        product_mgr,
+                        transaction_mgr,
+                        month=m,
+                        year=y,
+                        out_dir=REPORTS_DIR,
+                        top_k=5  # Chỉ định top 5
+                    )
                     print(format_financial_summary_text(summary))
+
                     print(f"✅ Đã xuất file chi tiết: {REPORTS_DIR}/sales_summary_{m:02d}_{y}.csv")
                 except Exception as e:
                     print(f"❌ Lỗi khi tạo báo cáo: {e}")

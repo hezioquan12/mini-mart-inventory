@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="fix xuất file khi dùng console">
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="fix cli">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/products.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/products.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/transaction_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/data/transaction_log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/transactions.csv" beforeDir="false" afterPath="$PROJECT_DIR$/data/transactions.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/cli.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -270,7 +267,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761897604797</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="fix cli">
+      <option name="closed" value="true" />
+      <created>1762436836065</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1762436836065</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -299,7 +304,8 @@
     <MESSAGE value="fix tạo báo cáo và tải về" />
     <MESSAGE value="cải thiện cli" />
     <MESSAGE value="fix xuất file khi dùng console" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix xuất file khi dùng console" />
+    <MESSAGE value="fix cli" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix cli" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
