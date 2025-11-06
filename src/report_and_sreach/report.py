@@ -535,19 +535,29 @@ def compute_financial_summary(
         "least_purchased": least_purchased,
         "product_sales": {pid: qty for pid, qty in qty_by_product.items()},
     }
-
-    # Export CSV if both month and year provided
     if month is not None and year is not None:
         try:
-            out_dir_path = Path(out_dir) if out_dir else Path("data")
-            out_dir_path.mkdir(parents=True, exist_ok=True)
+            save_dir: Path
+            if out_dir:
+                save_dir = Path(out_dir)
+            else:
+                save_dir = Path("reports")
+
+            # Tạo thư mục (chỉ 1 lần)
+            save_dir.mkdir(parents=True, exist_ok=True)
+
+            # Tạo tên file và đường dẫn LƯU FILE (dùng save_dir)
             fname = f"sales_summary_{int(month):02d}_{int(year)}.csv"
-            out_path = out_dir_path / fname
+            out_path = save_dir / fname  # <-- Sửa ở đây
+
+            # Ghi file (giữ nguyên code ghi CSV)
             with out_path.open("w", encoding=DEFAULT_ENCODING, newline="") as f:
                 writer = csv.writer(f)
                 cur = summary.get("currency", "") or ""
+
                 def with_cur(val: Any) -> str:
                     return f"{val} {cur}" if (val is not None and cur) else (str(val) if val is not None else "")
+
                 # Summary header
                 writer.writerow(["Key", "Value"])
                 writer.writerow(["total_revenue", with_cur(summary["total_revenue"])])
@@ -592,7 +602,9 @@ def compute_financial_summary(
                         with_cur(it.get("cost", "0")),
                         with_cur(it.get("profit", "0")),
                     ])
+
             logger.info("Wrote sales summary CSV: %s", str(out_path))
+
         except Exception as e:
             logger.exception("Failed to write sales summary CSV: %s", e)
 

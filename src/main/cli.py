@@ -17,6 +17,7 @@ from pathlib import Path
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Optional, List, Any
+import os
 
 
 def run_cli_app():
@@ -391,18 +392,27 @@ def run_cli_app():
                         month=m,
                         year=y,
                         out_dir=REPORTS_DIR,
-                        top_k=5  # Chỉ định top 5
+                        top_k=5
                     )
                     print(format_financial_summary_text(summary))
+                    # 2. Lấy timestamp (chuỗi ngày-giờ-phút-giây)
+                    now_str = now.strftime('%Y%m%d_%H%M%S')
 
-                    print(f"✅ Đã xuất file chi tiết: {REPORTS_DIR}/sales_summary_{m:02d}_{y}.csv")
+                    # 3. Đây là tên file chuẩn mà hàm vừa tạo ra
+                    standard_file_name = f"sales_summary_{m:02d}_{y}.csv"
+                    standard_path = REPORTS_DIR / standard_file_name
+
+                    # 4. Đây là tên file mới bạn muốn
+                    new_file_name = f"sales_summary_{m:02d}_{y}_{now_str}.csv"
+                    new_path = REPORTS_DIR / new_file_name
+                    # 5. Dùng 'os.rename' để đổi tên file
+                    if standard_path.exists():
+                        os.rename(standard_path, new_path)
+                        print(f"✅ Đã xuất file chi tiết: {new_path}")
+                    else:
+                        print(f"❓ Đã tạo báo cáo, nhưng không tìm thấy file '{standard_path}' để đổi tên.")
                 except Exception as e:
                     print(f"❌ Lỗi khi tạo báo cáo: {e}")
-            elif c == "0":
-                break
-            else:
-                print("❗️ Lựa chọn không hợp lệ.")
-
     def menu_xuat_du_lieu():
         print("\n=== 4. XUẤT DỮ LIỆU ===")
         try:

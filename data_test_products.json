@@ -8,8 +8,8 @@
     "stock_quantity": 50,
     "min_threshold": 5,
     "unit": "box",
-    "created_date": "2025-10-11T15:51:52.465348+07:00",
-    "last_updated": "2025-10-11T15:51:52.465351+07:00"
+    "created_date": "2025-11-06T22:59:25.347820+07:00",
+    "last_updated": "2025-11-06T22:59:25.347822+07:00"
   },
   {
     "product_id": "P2",
@@ -20,7 +20,7 @@
     "stock_quantity": 100,
     "min_threshold": 10,
     "unit": "piece",
-    "created_date": "2025-10-11T15:51:52.501290+07:00",
-    "last_updated": "2025-10-11T15:51:52.501296+07:00"
+    "created_date": "2025-11-06T22:59:25.352080+07:00",
+    "last_updated": "2025-11-06T22:59:25.352082+07:00"
   }
 ]

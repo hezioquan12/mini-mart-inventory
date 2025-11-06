@@ -12,11 +12,14 @@ import altair as alt
 # =================================================================================
 # === KHẮC PHỤC LỖI MODULE NOT FOUND
 # =================================================================================
+
 try:
-    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    if PROJECT_ROOT not in sys.path:
-        sys.path.insert(0, PROJECT_ROOT)
-except Exception:
+    PROJECT_ROOT_PATH = Path(__file__).parent.parent.parent.resolve()
+    PROJECT_ROOT_STR = str(PROJECT_ROOT_PATH)
+    if PROJECT_ROOT_STR not in sys.path:
+        sys.path.insert(0, PROJECT_ROOT_STR)
+except Exception as e:
+    st.error(f"Không thể xác định thư mục gốc của dự án: {e}")
     if "." not in sys.path:
         sys.path.insert(0, ".")
 
@@ -45,7 +48,6 @@ except ImportError as e:
     st.stop()
 
 # --- Cấu hình và khởi tạo các đối tượng quản lý ---
-PROJECT_ROOT_PATH = Path(PROJECT_ROOT)
 DATA_DIR = PROJECT_ROOT_PATH / "data"
 REPORTS_DIR = PROJECT_ROOT_PATH / "reports"
 DATA_DIR.mkdir(exist_ok=True)
