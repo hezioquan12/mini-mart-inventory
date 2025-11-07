@@ -22,5 +22,17 @@
     "unit": "hộp",
     "created_date": "2025-10-03T13:57:02.188737+07:00",
     "last_updated": "2025-10-03T14:24:35.857471+07:00"
+  },
+  {
+    "product_id": "T3",
+    "name": "Cà phê",
+    "category": "Drinks",
+    "cost_price": "500",
+    "sell_price": "50000",
+    "stock_quantity": 20,
+    "min_threshold": 5,
+    "unit": "cái",
+    "created_date": "2025-11-07T12:47:23.432194+07:00",
+    "last_updated": "2025-11-07T12:47:23.432198+07:00"
   }
 ]

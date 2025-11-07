@@ -150,7 +150,6 @@ if menu == "📊 Tổng quan":
             st.success("👍 Tồn kho đang ở mức an toàn.")
         else:
             st.text_area("Chi tiết", value=format_alerts_text(alerts), height=250, disabled=True)
-
 # =================================================================================
 # === TRANG QUẢN LÝ SẢN PHẨM
 # =================================================================================

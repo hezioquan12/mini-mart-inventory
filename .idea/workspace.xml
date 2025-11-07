@@ -4,13 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="fix cli và streamlit">
+    <list default="true" id="7ec4adf0-e311-4c93-9451-9eb2df36ce1a" name="Changes" comment="final 1.0">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/sales_summary_10_2025.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/data_test_products.json" beforeDir="false" afterPath="$PROJECT_DIR$/data_test_products.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/cli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/products.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/products.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/streamlit_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/streamlit_app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report_and_sreach/report.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/report_and_sreach/report.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/validators.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/validators.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -295,7 +293,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762439655413</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="final 1.0">
+      <option name="closed" value="true" />
+      <created>1762444795410</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1762444795410</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -326,7 +332,8 @@
     <MESSAGE value="fix xuất file khi dùng console" />
     <MESSAGE value="fix cli" />
     <MESSAGE value="fix cli và streamlit" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix cli và streamlit" />
+    <MESSAGE value="final 1.0" />
+    <option name="LAST_COMMIT_MESSAGE" value="final 1.0" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

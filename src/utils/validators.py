@@ -2,21 +2,14 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import Any, Optional
 from src.utils.time_zone import VN_TZ
-import warnings
+import unicodedata
+import re
 
 def normalize_name(name: Any, ascii_only: bool = False) -> str:
     """
     Chuẩn hóa chuỗi để so sánh/tìm kiếm.
-
-    Loại bỏ khoảng trắng thừa, chuyển thành chữ thường.
-    Nếu ascii_only=True sẽ loại bỏ dấu và ký tự đặc biệt.
-
-    Args:
-        name: Chuỗi hoặc giá trị cần chuẩn hóa.
-        ascii_only: Nếu True loại bỏ dấu và ký tự đặc biệt.
-
-    Returns:
-        Chuỗi đã chuẩn hóa.
+    - Chuyển thường
+    - Loại bỏ khoảng trắng thừa
     """
     if name is None:
         return ""
@@ -24,14 +17,13 @@ def normalize_name(name: Any, ascii_only: bool = False) -> str:
     s = " ".join(str(name).strip().lower().split())  # loại bỏ khoảng trắng thừa
 
     if ascii_only:
-        try:
-            import unidecode  # noqa: F401
-            s = unidecode.unidecode(s)
-        except ImportError:
-            warnings.warn("unidecode không được cài đặt, bỏ qua ascii_only.")
+        # Loại bỏ dấu tiếng Việt bằng Unicode normalization
+        nfkd = unicodedata.normalize("NFKD", s)
+        s = "".join([c for c in nfkd if not unicodedata.combining(c)])
+        # Giữ lại chữ, số, khoảng trắng
+        s = re.sub(r"[^a-z0-9\s]", "", s)
 
     return s
-
 
 def to_decimal(value: Any) -> Decimal:
     """
